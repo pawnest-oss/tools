@@ -630,7 +630,7 @@
           jsPDF: {
             unit: 'px',
             format: [canvas.width, canvas.height],
-            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait'
+            orientation: 'portrait' // always portrait, regardless of captured canvas aspect ratio
           }
         });
       }).toPdf().save()
