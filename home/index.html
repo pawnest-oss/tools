@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>all tools</title>
+    <style>
+        /* Modern Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Container for the Tools Home Page */
+        .container {
+            width: 100%;
+            max-width: 480px; /* Perfect for mobile screens */
+            background: #ffffff;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        /* Header Section with Logo */
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            max-width: 120px;
+            height: auto;
+            border-radius: 50%; /* Rounded if it's a circular profile logo */
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+        }
+
+        /* Button Grid Layout */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Interactive Buttons */
+        .tool-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Distinct Colors for Buttons */
+        .btn-booking {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .btn-booking:hover {
+            background: linear-gradient(135deg, #2980b9, #2573a7);
+            transform: translateY(-2px);
+        }
+
+        .btn-final {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .btn-final:hover {
+            background: linear-gradient(135deg, #27ae60, #219653);
+            transform: translateY(-2px);
+        }
+
+        /* Active click effect for touch screens */
+        .tool-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Logo & Title -->
+        <div class="header">
+            <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="Logo" class="logo">
+            <h1 class="title">all tools</h1>
+        </div>
+
+        <!-- Tool Selection Buttons -->
+        <div class="button-group">
+            <button class="tool-btn btn-booking" onclick="openTool('https://pawnest-oss.github.io/tools/booking_invoice/')">
+                Booking Ticket
+            </button>
+            <button class="tool-btn btn-final" onclick="openTool('https://pawnest-oss.github.io/tools/final_invoice/')">
+                Final Invoice
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript to Handle Redirection Safely -->
+    <script>
+        function openTool(url) {
+            if(url) {
+                window.open(url, '_blank');
+            }
+        }
+    </script>
+
+</body>
+</html>
