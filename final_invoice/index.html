@@ -581,15 +581,10 @@
   // ---------- PDF export ----------
   // Renders #ticketPrintWrap with html2canvas and saves a real .pdf file
   // (window.print() only opens the OS dialog, it can't auto-download).
-  // Two things were breaking this before:
-  //  1. Only images were awaited before capture, not webfonts — so
-  //     Fraunces/IBM Plex Mono/Hind Siliguri sometimes hadn't loaded yet
-  //     and html2canvas rasterized the fallback system font instead.
-  //  2. .duo and .route were CSS grid, which html2canvas renders poorly
-  //     (columns collapsing/overlapping) — both are now flexbox (see CSS).
-  // BG graphics (the body gradient) were never part of the problem since
-  // only #ticketPrintWrap is captured, not <body> — that's excluded by
-  // construction already.
+  // Font/grid fixes noted above still apply. Page is now a fixed US Letter
+  // sheet with the ticket image centered on it (previously the page was
+  // sized exactly to the canvas and the image ended up pinned top-left
+  // with blank space around it instead of centered).
   function downloadPdf(){
     const wrap = $('ticketPrintWrap');
     const imgs = Array.from(wrap.querySelectorAll('img'));
@@ -614,28 +609,37 @@
     Promise.all([waitForFonts, ...waitForImages]).then(() => {
       document.body.classList.add('pdf-capturing'); // same look as @media print, no shadows
 
-      const worker = html2pdf().set({
-        margin: 0,
-        filename: ($('outInvoiceId').textContent || 'final-invoice') + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
-        jsPDF: { unit: 'px', format: 'a4', orientation: 'portrait' } // placeholder, resized below
-      }).from(wrap);
+      const elWidthPx = wrap.offsetWidth;   // CSS px, pre-scale
+      const elHeightPx = wrap.offsetHeight;
 
-      // Resize the PDF page to the EXACT captured canvas size before
-      // rendering it — html2pdf's own documented way to guarantee
-      // single-page, zero-crop output (no page-format guesswork).
-      worker.toCanvas().get('canvas').then(function(canvas){
-        worker.set({
-          jsPDF: {
-            unit: 'px',
-            format: [canvas.width, canvas.height],
-            orientation: 'portrait' // always portrait, regardless of captured canvas aspect ratio
-          }
-        });
-      }).toPdf().save()
-        .then(cleanup)
-        .catch(function(err){ console.error('[PawNest] PDF export failed', err); cleanup(); });
+      html2canvas(wrap, {
+        scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false
+      }).then(function(canvas){
+        const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const pdf = new JsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 36; // 0.5in on all sides
+
+        const pxToPt = 72 / 96; // CSS px -> pt at standard 96dpi
+        const imgWidthPt = elWidthPx * pxToPt;
+        const imgHeightPt = elHeightPx * pxToPt;
+
+        const availWidth = pageWidth - margin * 2;
+        const availHeight = pageHeight - margin * 2;
+        const scale = Math.min(availWidth / imgWidthPt, availHeight / imgHeightPt, 1); // never upscale
+
+        const finalWidth = imgWidthPt * scale;
+        const finalHeight = imgHeightPt * scale;
+        const x = (pageWidth - finalWidth) / 2;   // horizontal center
+        const y = (pageHeight - finalHeight) / 2; // vertical center
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
+        pdf.save(($('outInvoiceId').textContent || 'final-invoice') + '.pdf');
+        cleanup();
+      }).catch(function(err){ console.error('[PawNest] PDF export failed', err); cleanup(); });
     }).catch(function(err){ console.error('[PawNest] PDF prep failed', err); cleanup(); });
   }
 
