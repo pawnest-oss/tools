@@ -5,12 +5,14 @@
 <title>PawNest — Due Clearance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<!-- html2pdf back in: it produces a real, auto-downloaded .pdf file
-     (native window.print() can only open the OS print dialog, it can't
-     silently save a file). The ticket layout below is flex-based instead
-     of CSS grid specifically so html2canvas — which has weak/buggy grid
-     support — captures it correctly. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Standalone builds (not the html2pdf.js bundle) — the bundle keeps
+     html2canvas/jsPDF scoped internally and doesn't expose them as
+     window.html2canvas / window.jspdf.jsPDF, which is why calling them
+     directly was silently doing nothing. These standalone builds always
+     expose those globals. The ticket layout is flex-based (not CSS grid)
+     specifically so html2canvas captures it correctly. -->
 
 <style>
   :root{
@@ -606,6 +608,12 @@
       hideLoader();
     }
 
+    if (typeof html2canvas !== 'function') {
+      hideLoader();
+      alert('PDF লাইব্রেরি লোড হয়নি (network/adblock issue হতে পারে). পেজ রিফ্রেশ করে আবার চেষ্টা করো।');
+      return;
+    }
+
     Promise.all([waitForFonts, ...waitForImages]).then(() => {
       document.body.classList.add('pdf-capturing'); // same look as @media print, no shadows
 
@@ -616,6 +624,7 @@
         scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false
       }).then(function(canvas){
         const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!JsPDF) throw new Error('jsPDF লোড হয়নি');
         const pdf = new JsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
 
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -639,8 +648,16 @@
         pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
         pdf.save(($('outInvoiceId').textContent || 'final-invoice') + '.pdf');
         cleanup();
-      }).catch(function(err){ console.error('[PawNest] PDF export failed', err); cleanup(); });
-    }).catch(function(err){ console.error('[PawNest] PDF prep failed', err); cleanup(); });
+      }).catch(function(err){
+        console.error('[PawNest] PDF export failed', err);
+        cleanup();
+        alert('PDF তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+      });
+    }).catch(function(err){
+      console.error('[PawNest] PDF prep failed', err);
+      cleanup();
+      alert('PDF তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+    });
   }
 
   // init
