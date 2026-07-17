@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>PawNest — Due Clearance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- html2pdf back in: it produces a real, auto-downloaded .pdf file
+     (native window.print() can only open the OS print dialog, it can't
+     silently save a file). The ticket layout below is flex-based instead
+     of CSS grid specifically so html2canvas — which has weak/buggy grid
+     support — captures it correctly. -->
+
+<style>
+  :root{
+    --ink:#173229; --ink-soft:#3f594e;
+    --paper:#FAF6EC; --paper-dim:#F1EBDA;
+    --gold:#C89A3C; --gold-deep:#9C7524;
+    --rust:#A6432B; --line: rgba(23,50,41,0.16);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(200,154,60,0.14), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(200,154,60,0.10), transparent 45%);
+    font-family:'Hind Siliguri','Inter',sans-serif;
+    color: var(--ink); min-height:100vh; padding: 22px 14px 60px;
+  }
+  .wrap{max-width:520px; margin:0 auto;}
+
+  .brand{display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:0 4px;}
+  .brand img{height:46px; width:46px; object-fit:contain;}
+  .brand h1{font-family:'Fraunces', serif; font-weight:600; font-size:22px; color: var(--paper); margin:0; letter-spacing:0.3px;}
+  .brand p{margin:2px 0 0; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color: var(--gold);}
+
+  .card{background: var(--paper); border-radius: var(--radius); padding: 20px 18px 22px; margin-bottom:16px; box-shadow: 0 12px 30px rgba(0,0,0,0.28);}
+  .card h2{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase; color: var(--gold-deep); margin:0 0 14px; display:flex; align-items:center; gap:8px;}
+  .card h2::after{content:""; flex:1; height:1px; background: var(--line);}
+
+  /* ---------- Tabs (unclear invoices) ---------- */
+  .tabs{display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; -webkit-overflow-scrolling:touch;}
+  .tab{
+    flex:0 0 auto; min-width:150px; padding:10px 12px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; cursor:pointer; text-align:left;
+  }
+  .tab.active{border-color: var(--gold-deep); background: var(--paper-dim); box-shadow: inset 0 0 0 1px var(--gold-deep);}
+  .tab .tid{font-family:'IBM Plex Mono',monospace; font-size:11px; color: var(--rust); font-weight:600;}
+  .tab .tname{font-family:'Fraunces',serif; font-weight:600; font-size:14px; margin-top:2px;}
+  .tab .tpet{font-family:'Hind Siliguri',sans-serif; font-size:11.5px; color: var(--ink-soft); margin-top:1px;}
+  .empty-msg{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color: var(--paper); text-align:center; padding: 30px 10px; white-space:pre-wrap; word-break:break-word;}
+  .retry-btn{display:block; margin: 10px auto 0; padding:8px 16px; border-radius:8px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-family:'IBM Plex Mono',monospace; font-size:11px; cursor:pointer;}
+
+  /* ---------- Detail panel ---------- */
+  label{display:block; font-size:12.5px; color: var(--ink-soft); margin: 12px 0 5px; font-weight:500;}
+  input[type=number]{width:100%; padding:11px 12px; font-size:15px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font-family:inherit; outline:none;}
+  input:focus{border-color: var(--gold-deep); box-shadow:0 0 0 3px rgba(200,154,60,0.18);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  .due-hero{text-align:center; padding: 10px 0 4px;}
+  .due-hero .k{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color: var(--gold-deep);}
+  .due-hero .v{font-family:'Fraunces',serif; font-weight:700; font-size:34px; color: var(--rust); margin-top:4px;}
+
+  .calc-box{margin-top:14px; padding:12px 14px; background: var(--paper-dim); border-radius:10px; border:1px dashed var(--line); font-family:'IBM Plex Mono',monospace; font-size:13px;}
+  .calc-box .line{display:flex; justify-content:space-between; padding:3px 0;}
+  .calc-box .line.total{border-top:1px solid var(--line); margin-top:6px; padding-top:8px; font-weight:600; color:var(--rust);}
+
+  .check-row{display:flex; align-items:center; gap:10px; margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .check-row input{width:20px; height:20px; accent-color: var(--gold-deep);}
+  .check-row .clabel{font-size:14px; font-weight:600;}
+
+  .submit-btn{width:100%; margin-top:20px; padding:14px; border:none; border-radius:10px; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color:#1c1406; font-weight:600; font-size:15.5px; letter-spacing:0.3px; cursor:pointer; font-family:'Hind Siliguri',sans-serif;}
+  .submit-btn:disabled{opacity:0.6;}
+  .err{color:var(--rust); font-size:12.5px; margin-top:10px; display:none; white-space:pre-wrap; word-break:break-word;}
+  .back-link{display:inline-block; margin-bottom:10px; color: var(--gold); font-family:'IBM Plex Mono',monospace; font-size:12px; cursor:pointer; text-decoration:underline;}
+
+  /* ---------- Loader overlay ---------- */
+  #loaderOverlay{
+    position:fixed; inset:0; background: rgba(23,50,41,0.55); backdrop-filter: blur(2px);
+    display:none; align-items:center; justify-content:center; z-index:999; flex-direction:column; gap:14px;
+  }
+  #loaderOverlay.show{display:flex;}
+  .spinner{
+    width:44px; height:44px; border-radius:50%;
+    border: 4px solid rgba(250,246,236,0.25); border-top-color: var(--gold);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .loader-text{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:1.5px; color: var(--paper); text-transform:uppercase;}
+
+  /* ---------- Final invoice ticket (English) ---------- */
+  #ticketView{display:none;}
+  .final-ribbon{
+    text-align:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12px;
+    letter-spacing:4px; text-transform:uppercase; color:#fff; background: var(--rust);
+    padding:8px 0; border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .ticket{background: var(--paper); border-radius: 0 0 var(--radius) var(--radius); box-shadow: 0 18px 40px rgba(0,0,0,0.32); overflow:hidden;}
+  .ticket-top{padding: 22px 20px 18px;}
+  .ticket-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .ticket-head .id{text-align:right; font-family:'IBM Plex Mono',monospace;}
+  .ticket-head .id .label{font-size:10px; letter-spacing:2px; color:var(--gold-deep); text-transform:uppercase;}
+  .ticket-head .id .num{font-size:19px; font-weight:600; color:var(--rust); letter-spacing:1px;}
+  .ticket-head .id .thanks{font-family:'Hind Siliguri',sans-serif; font-size:11px; color:var(--ink-soft); margin-top:4px; font-style:italic;}
+  .ticket-logo{display:flex; align-items:center; gap:10px;}
+  .ticket-logo img{height:38px; width:38px; object-fit:contain;}
+  .ticket-logo .t1{font-family:'Fraunces',serif; font-weight:600; font-size:19px; line-height:1;}
+  .ticket-logo .t2{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:2px; color:var(--gold-deep); text-transform:uppercase;}
+
+  .pass-title{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:3px; text-transform:uppercase; color:var(--ink-soft); text-align:center; margin: 16px 0 4px; position:relative;}
+  .pass-title::before, .pass-title::after{content:""; position:absolute; top:50%; width:26%; height:1px; background: var(--line);}
+  .pass-title::before{left:0;} .pass-title::after{right:0;}
+
+  .duo{display:flex; gap:14px; margin-top:14px;}
+  .duo .field-block{flex:1 1 0; min-width:0;}
+  .duo .field-block .k{font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace;}
+  .duo .field-block .v{font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin-top:2px;}
+  .duo .field-block .v.small{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
+
+  .route{display:flex; align-items:center; gap:8px; margin-top:16px;}
+  .route .stop{flex:1 1 0; min-width:0;}
+  .route .stop .k{font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace;}
+  .route .stop .date{font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin-top:3px;}
+  .route .stop .time{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);}
+  .route .stop.out{text-align:right;}
+  .route .arrow{flex:0 0 auto; font-family:'IBM Plex Mono',monospace; color:var(--gold-deep); font-size:13px; text-align:center;}
+  .route .arrow .days{font-size:10px; margin-top:2px; white-space:nowrap;}
+
+  .perf{position:relative; height:0; border-top:2px dashed rgba(23,50,41,0.35); margin: 4px 0 0;}
+  .perf::before, .perf::after{content:""; position:absolute; top:-11px; width:22px; height:22px; border-radius:50%; background: var(--ink);}
+  .perf::before{left:-31px;} .perf::after{right:-31px;}
+
+  .ticket-bottom{padding: 18px 20px 20px; background: var(--paper-dim);}
+  .fare-row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:13px; padding:4px 0; color:var(--ink-soft);}
+  .fare-row.total{border-top:1px solid var(--line); margin-top:6px; padding-top:9px; font-weight:600; color:var(--ink); font-size:14px;}
+  .fare-row.due{font-weight:700; color:var(--rust); font-size:15px;}
+  .fare-row.cleared{font-weight:700; color:#2f7d4f; font-size:15px;}
+  .fare-row .prev-date{font-size:10.5px; color: var(--ink-soft); opacity:0.85; margin-left:6px;}
+
+  .thanks-bottom{text-align:center; font-family:'Fraunces',serif; font-weight:600; font-size:12px; color: var(--ink-soft); font-style:italic; margin-top:12px;}
+  .barcode-caption{text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--ink-soft); margin-top:6px;}
+
+  .actions{display:flex; gap:10px; margin-top:16px;}
+  .actions button{flex:1; padding:13px; border-radius:10px; border:none; font-size:14.5px; font-weight:600; font-family:'Hind Siliguri',sans-serif; cursor:pointer;}
+  .actions .print-btn{background: var(--ink); color: var(--paper);}
+  .actions .pdf-btn{background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color:#1c1406;}
+  .new-btn{width:100%; margin-top:10px; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.25); background:transparent; color: var(--paper); font-family:'Hind Siliguri',sans-serif; font-size:14px; cursor:pointer;}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .brand, .no-print{display:none !important;}
+    .wrap{max-width:100%;}
+    .ticket, .final-ribbon{box-shadow:none;}
+    @page{margin: 10mm;}
+  }
+
+  /* Applied to #ticketPrintWrap just before html2canvas snapshots it, so
+     the downloaded PDF matches the print look (no shadows, white bg). */
+  body.pdf-capturing{background:#fff;}
+  body.pdf-capturing .ticket,
+  body.pdf-capturing .final-ribbon{box-shadow:none;}
+</style>
+</head>
+<body>
+
+<div id="loaderOverlay">
+  <div class="spinner"></div>
+  <div class="loader-text" id="loaderText">লোড হচ্ছে…</div>
+</div>
+
+<div class="wrap">
+
+  <div class="brand">
+    <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/main/1784124368151.png" alt="PawNest logo" crossorigin="anonymous">
+    <div>
+      <h1>PawNest</h1>
+      <p>Due Clearance</p>
+    </div>
+  </div>
+
+  <!-- ===================== LIST + DETAIL VIEW ===================== -->
+  <div id="listView">
+    <div class="card">
+      <h2>Unclear Invoice</h2>
+      <div class="tabs" id="tabsWrap"></div>
+    </div>
+
+    <div class="card" id="detailCard" style="display:none;">
+      <h2 id="detailHeading">Invoice</h2>
+
+      <div class="due-hero">
+        <div class="k">বর্তমান Due</div>
+        <div class="v" id="curDue">₹0</div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>নতুন Discount (₹)</label>
+          <input type="number" id="extraDiscount" min="0" step="1" value="0">
+        </div>
+        <div>
+          <label>প্রদত্ত Amount (₹)</label>
+          <input type="number" id="amountPaid" min="0" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="calc-box">
+        <div class="line"><span>Total Bill (after discount)</span><span id="newTotalBill">₹0</span></div>
+        <div class="line"><span>Advance (আগের)</span><span id="curAdvanceLine">₹0</span></div>
+        <div class="line"><span>Paid (এখন)</span><span id="paidNowLine">₹0</span></div>
+        <div class="line total"><span>নতুন Due</span><span id="newDue">₹0</span></div>
+      </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="clearedCheck">
+        <span class="clabel">Cleared — বকেয়া সম্পূর্ণ মেটানো হয়েছে</span>
+      </div>
+
+      <div class="err" id="detailErr"></div>
+      <button class="submit-btn" id="generateBtn">Generate Invoice →</button>
+    </div>
+  </div>
+
+  <!-- ===================== FINAL INVOICE TICKET ===================== -->
+  <div id="ticketView">
+    <div id="ticketPrintWrap">
+      <div class="final-ribbon">Final Invoice</div>
+      <div class="ticket" id="ticketEl">
+      <div class="ticket-top">
+        <div class="ticket-head">
+          <div class="ticket-logo">
+            <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/main/1784124368151.png" alt="PawNest" crossorigin="anonymous">
+            <div>
+              <div class="t1">PawNest</div>
+              <div class="t2">Pet Boarding</div>
+            </div>
+          </div>
+          <div class="id">
+            <div class="label">Invoice No.</div>
+            <div class="num" id="outInvoiceId">PN-000000</div>
+            <div class="thanks" id="outBillDate">—</div>
+          </div>
+        </div>
+
+        <div class="pass-title">Boarding Pass</div>
+
+        <div class="duo">
+          <div class="field-block">
+            <div class="k">Guardian</div>
+            <div class="v" id="outGuardianName">—</div>
+            <div class="v small" id="outContact">—</div>
+            <div class="v small" id="outAddress">—</div>
+            <div class="v small" id="outIdProof">—</div>
+          </div>
+          <div class="field-block">
+            <div class="k">Pet</div>
+            <div class="v" id="outPetName">—</div>
+            <div class="v small" id="outBreedAgeGender">—</div>
+          </div>
+        </div>
+
+        <div class="route">
+          <div class="stop in">
+            <div class="k">Check-in</div>
+            <div class="date" id="outCheckinDate">—</div>
+            <div class="time" id="outCheckinTime">—</div>
+          </div>
+          <div class="arrow">
+            <div>
+              <svg width="18" height="18" viewBox="0 0 24 24" style="fill:var(--gold-deep);">
+                <path d="M12 3.2 2.5 10.9v10.4h6.2v-6.4h6.6v6.4h6.2V10.9L12 3.2Z"/>
+              </svg>
+            </div>
+            <div class="days" id="outDaysLabel">— days</div>
+          </div>
+          <div class="stop out">
+            <div class="k">Check-out</div>
+            <div class="date" id="outCheckoutDate">—</div>
+            <div class="time" id="outCheckoutTime">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="perf"></div>
+
+      <div class="ticket-bottom">
+        <div class="fare-row"><span>Per Day × Days</span><span id="outPerDayCalc">—</span></div>
+        <div class="fare-row" id="outDiscountRow"><span>Discount</span><span id="outDiscount">− ₹0</span></div>
+        <div class="fare-row total"><span>Total Bill</span><span id="outTotalBill">₹0</span></div>
+        <div class="fare-row" id="outAdvanceRow"><span id="outAdvanceLabel">Advance</span><span id="outAdvance">₹0</span></div>
+        <div class="fare-row" id="outPaidRow"><span id="outPaidLabel">Paid</span><span id="outPaid">₹0</span></div>
+        <div class="fare-row due" id="outDueRow"><span>Due</span><span id="outDue">₹0</span></div>
+
+        <div class="thanks-bottom">Thank you for your trust</div>
+        <div class="barcode-caption" id="outBarcodeCaption">PN-000000 · CLEARED</div>
+      </div>
+    </div>
+    </div>
+
+    <div class="actions no-print">
+      <button class="print-btn" onclick="window.print()">🖨 Print</button>
+      <button class="pdf-btn" onclick="downloadPdf()">⬇ PDF</button>
+    </div>
+    <button class="new-btn no-print" onclick="backToList()">← Back to list</button>
+  </div>
+
+</div>
+
+<script>
+  // Apps Script /exec URL for this backend.
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzPz3-FmJKXpHC7VxwOBdYPxuJ6W5uFDepxL0G4-b8Hj5nxr16XEaSeRNlwkYZZNAhNdQ/exec';
+
+  const $ = (id) => document.getElementById(id);
+  let currentDetail = null;
+
+  // ---------- Loader ----------
+  function showLoader(text){
+    $('loaderText').textContent = text || 'লোড হচ্ছে…';
+    $('loaderOverlay').classList.add('show');
+  }
+  function hideLoader(){
+    $('loaderOverlay').classList.remove('show');
+  }
+
+  // callApi: logs every request/response to the console for debugging, and
+  // throws a real Error with a readable message on network failure or bad status.
+  async function callApi(payload){
+    console.log('[PawNest] → request', payload);
+    let res;
+    try {
+      res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify(payload)
+      });
+    } catch (networkErr) {
+      console.error('[PawNest] network/fetch failure', networkErr);
+      throw new Error('Server-এ পৌঁছানো যাচ্ছে না (network/CORS issue). API_URL ঠিক আছে কিনা এবং deployment "Anyone" access-এ আছে কিনা চেক করো।');
+    }
+    if (!res.ok) {
+      console.error('[PawNest] HTTP error', res.status, res.statusText);
+      throw new Error('Server error: HTTP ' + res.status);
+    }
+    let json;
+    try {
+      json = await res.json();
+    } catch (parseErr) {
+      console.error('[PawNest] response was not valid JSON', parseErr);
+      throw new Error('Server থেকে অপ্রত্যাশিত response এসেছে (JSON parse fail). Deployment access "Anyone" আছে কিনা দেখো।');
+    }
+    console.log('[PawNest] ← response', json);
+    return json;
+  }
+
+  function num(v){ return Number(v) || 0; }
+  function inr(v){ return '₹' + num(v).toLocaleString('en-IN'); }
+
+  // ---------- Load unclear tabs ----------
+  function loadUnclearList(){
+    $('detailCard').style.display = 'none';
+    $('tabsWrap').innerHTML = '';
+    showLoader('তালিকা লোড হচ্ছে…');
+    callApi({ action: 'getUnclearInvoices' }).then(function(list){
+      if (list && !Array.isArray(list) && list.error) {
+        $('tabsWrap').innerHTML =
+          '<div class="empty-msg">Backend Error:\n' + list.error + '</div>' +
+          '<button class="retry-btn" onclick="loadUnclearList()">Retry</button>';
+        return;
+      }
+      if (!list || !list.length) {
+        $('tabsWrap').innerHTML = '<div class="empty-msg">সব বিল Cleared ✓</div>';
+        return;
+      }
+      $('tabsWrap').innerHTML = '';
+      list.forEach(function(inv){
+        const btn = document.createElement('button');
+        btn.className = 'tab';
+        btn.innerHTML = '<div class="tid"></div><div class="tname"></div><div class="tpet"></div>';
+        btn.querySelector('.tid').textContent = inv.invoiceId;
+        btn.querySelector('.tname').textContent = inv.guardianName;
+        btn.querySelector('.tpet').textContent = inv.petName;
+        btn.onclick = function(){
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+          openInvoice(inv.invoiceId);
+        };
+        $('tabsWrap').appendChild(btn);
+      });
+    }).catch(function(err){
+      $('tabsWrap').innerHTML =
+        '<div class="empty-msg">সমস্যা:\n' + err.message + '</div>' +
+        '<button class="retry-btn" onclick="loadUnclearList()">Retry</button>';
+    }).finally(hideLoader);
+  }
+
+  // ---------- Open one invoice's detail ----------
+  function openInvoice(invoiceId){
+    $('detailCard').style.display = 'none';
+    showLoader('ইনভয়েস লোড হচ্ছে…');
+    callApi({ action: 'getInvoiceDetail', invoiceId: invoiceId }).then(function(detail){
+      if (detail.error) { alert(detail.error); return; }
+      currentDetail = detail;
+      $('detailHeading').textContent = detail.invoiceId + ' — ' + detail.guardianName + ' (' + detail.petName + ')';
+      $('curDue').textContent = inr(detail.due);
+      $('extraDiscount').value = 0;
+      $('amountPaid').value = 0;
+      $('clearedCheck').checked = false;
+      $('detailErr').style.display = 'none';
+      $('generateBtn').disabled = false;
+      $('generateBtn').textContent = 'Generate Invoice →';
+      recalcClearance();
+      $('detailCard').style.display = 'block';
+    }).catch(function(err){ alert('সমস্যা: ' + err.message); })
+      .finally(hideLoader);
+  }
+
+  function recalcClearance(){
+    if (!currentDetail) return;
+    const curTotalBill = num(currentDetail.totalBill);
+    const curDue = num(currentDetail.due); // current Due, col V, as shown before this clearance
+    let extraDiscount = num($('extraDiscount').value);
+    const amountPaid = num($('amountPaid').value);
+
+    let newTotalBill = curTotalBill - extraDiscount;
+    if (newTotalBill < 0) newTotalBill = 0;
+    const newDue = curDue - extraDiscount - amountPaid; // current Due − new discount − Paid (এখন)
+
+    $('newTotalBill').textContent = inr(newTotalBill);
+    $('curAdvanceLine').textContent = inr(currentDetail.advance); // static, col U, never changes
+    $('paidNowLine').textContent = inr(amountPaid);               // live, what you're entering now
+    $('newDue').textContent = inr(newDue);
+  }
+  ['extraDiscount','amountPaid'].forEach(id => $(id).addEventListener('input', recalcClearance));
+
+  // ---------- Generate final invoice ----------
+  $('generateBtn').addEventListener('click', function(){
+    if (!currentDetail) return;
+    $('generateBtn').disabled = true;
+    $('generateBtn').textContent = 'তৈরি হচ্ছে…';
+    $('detailErr').style.display = 'none';
+    showLoader('ইনভয়েস তৈরি হচ্ছে…');
+
+    callApi({
+      action: 'clearInvoice',
+      invoiceId: currentDetail.invoiceId,
+      extraDiscount: num($('extraDiscount').value),
+      amountPaid: num($('amountPaid').value),
+      cleared: $('clearedCheck').checked
+    }).then(function(result){
+      if (result.error) throw new Error(result.error);
+      renderFinalTicket(result);
+    }).catch(function(err){
+      $('generateBtn').disabled = false;
+      $('generateBtn').textContent = 'Generate Invoice →';
+      $('detailErr').style.display = 'block';
+      $('detailErr').textContent = 'সমস্যা হয়েছে: ' + err.message;
+    }).finally(hideLoader);
+  });
+
+  // ---------- Formatters (English side, same as booking invoice) ----------
+  function fmtDate(d){
+    if(!d) return '—';
+    const dt = new Date(d);
+    if (isNaN(dt)) return String(d);
+    return dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  function fmtTime(t){
+    if(!t) return '—';
+    const str = String(t);
+    const parts = str.includes(':') ? str.split(':') : null;
+    if (!parts) return str;
+    const hh = parseInt(parts[0],10);
+    if (isNaN(hh)) return str;
+    const ap = hh >= 12 ? 'PM' : 'AM';
+    const h12 = ((hh + 11) % 12) + 1;
+    return h12 + ':' + parts[1].slice(0,2) + ' ' + ap;
+  }
+  // Parses a "dd/MM/yyyy" or "dd/MM/yyyy hh:mm a" style string (as stored by
+  // Apps Script) into a Date, then formats it nicely.
+  function parseSheetDate_(s){
+    if (!s) return null;
+    const datePart = String(s).split(' ')[0];
+    const bits = datePart.split('/');
+    if (bits.length !== 3) return null;
+    const [d,m,y] = bits;
+    const dt = new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10));
+    return isNaN(dt) ? null : dt;
+  }
+  function fmtBillDate(ts, prefix){
+    const dt = parseSheetDate_(ts);
+    if (!dt) return ts ? String(ts) : '—';
+    return (prefix || '') + dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  }
+
+  function renderFinalTicket(d){
+    $('outInvoiceId').textContent = d.invoiceId;
+    // Final invoice date = the day THIS ticket was generated (X column),
+    // not the original booking date.
+    $('outBillDate').textContent = fmtBillDate(d.finalDate, 'Billed ');
+
+    $('outGuardianName').textContent = d.guardianName;
+    $('outContact').textContent = d.whatsapp + (d.email ? ' · ' + d.email : '');
+    $('outAddress').textContent = d.address;
+    $('outIdProof').textContent = 'ID Proof: ' + d.idProof;
+
+    $('outPetName').textContent = d.petName;
+    $('outBreedAgeGender').textContent = d.breed + ' · ' + d.age + ' · ' + d.gender;
+
+    $('outCheckinDate').textContent = fmtDate(d.checkinDate);
+    $('outCheckinTime').textContent = fmtTime(d.checkinTime);
+    $('outCheckoutDate').textContent = fmtDate(d.checkoutDate);
+    $('outCheckoutTime').textContent = fmtTime(d.checkoutTime);
+    $('outDaysLabel').textContent = d.totalDays + ' day' + (d.totalDays > 1 ? 's' : '');
+
+    $('outPerDayCalc').textContent = inr(d.perDay) + ' × ' + d.totalDays + ' = ' + inr(d.subtotal);
+
+    // Discount shown = S (original booking discount, frozen) + Y (this
+    // event's extra discount only) — S no longer accumulates on its own.
+    const discountShown = num(d.discount) + num(d.newDiscount);
+    if (discountShown > 0) {
+      $('outDiscountRow').style.display = 'flex';
+      $('outDiscount').textContent = '− ' + inr(discountShown);
+    } else {
+      $('outDiscountRow').style.display = 'none';
+    }
+
+    $('outTotalBill').textContent = inr(d.totalBill);
+
+    // ---- Advance row: label carries the date, value carries pure amount ----
+    const advDt = parseSheetDate_(d.advanceDate);
+    $('outAdvanceLabel').textContent = 'Advance' + (advDt
+      ? ' (' + advDt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) + ')'
+      : '');
+    $('outAdvance').textContent = inr(d.advance);
+
+    // ---- Paid row: only THIS clearance's new amount (col Z), label carries
+    // today's clearance date (col X / finalDate). Hidden if nothing paid now.
+    const paidNow = num(d.paidAmount);
+    if (paidNow > 0) {
+      $('outPaidRow').style.display = 'flex';
+      const paidDt = parseSheetDate_(d.finalDate);
+      $('outPaidLabel').textContent = 'Paid' + (paidDt
+        ? ' (' + paidDt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) + ')'
+        : '');
+      $('outPaid').textContent = inr(paidNow);
+    } else {
+      $('outPaidRow').style.display = 'none';
+    }
+
+    const dueRow = $('outDueRow');
+    if (String(d.status).trim() === 'Cleared') {
+      dueRow.classList.remove('due');
+      dueRow.classList.add('cleared');
+      dueRow.querySelector('span:first-child').textContent = 'Status';
+      $('outDue').textContent = 'CLEARED ✓';
+    } else {
+      dueRow.classList.remove('cleared');
+      dueRow.classList.add('due');
+      dueRow.querySelector('span:first-child').textContent = 'Due';
+      $('outDue').textContent = inr(d.due);
+    }
+
+    $('outBarcodeCaption').textContent = d.invoiceId + ' · ' + String(d.status).toUpperCase();
+
+    $('listView').style.display = 'none';
+    $('ticketView').style.display = 'block';
+    window.scrollTo(0,0);
+  }
+
+  function backToList(){
+    $('ticketView').style.display = 'none';
+    $('listView').style.display = 'block';
+    currentDetail = null;
+    loadUnclearList();
+    window.scrollTo(0,0);
+  }
+
+  // ---------- PDF export ----------
+  // Renders #ticketPrintWrap with html2canvas and saves a real .pdf file
+  // (window.print() only opens the OS dialog, it can't auto-download).
+  // Two things were breaking this before:
+  //  1. Only images were awaited before capture, not webfonts — so
+  //     Fraunces/IBM Plex Mono/Hind Siliguri sometimes hadn't loaded yet
+  //     and html2canvas rasterized the fallback system font instead.
+  //  2. .duo and .route were CSS grid, which html2canvas renders poorly
+  //     (columns collapsing/overlapping) — both are now flexbox (see CSS).
+  // BG graphics (the body gradient) were never part of the problem since
+  // only #ticketPrintWrap is captured, not <body> — that's excluded by
+  // construction already.
+  function downloadPdf(){
+    const wrap = $('ticketPrintWrap');
+    const imgs = Array.from(wrap.querySelectorAll('img'));
+    const waitForImages = imgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+      });
+    });
+    const waitForFonts = (document.fonts && document.fonts.ready)
+      ? document.fonts.ready
+      : Promise.resolve();
+
+    showLoader('PDF তৈরি হচ্ছে…');
+
+    function cleanup(){
+      document.body.classList.remove('pdf-capturing');
+      hideLoader();
+    }
+
+    Promise.all([waitForFonts, ...waitForImages]).then(() => {
+      document.body.classList.add('pdf-capturing'); // same look as @media print, no shadows
+
+      const worker = html2pdf().set({
+        margin: 0,
+        filename: ($('outInvoiceId').textContent || 'final-invoice') + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
+        jsPDF: { unit: 'px', format: 'a4', orientation: 'portrait' } // placeholder, resized below
+      }).from(wrap);
+
+      // Resize the PDF page to the EXACT captured canvas size before
+      // rendering it — html2pdf's own documented way to guarantee
+      // single-page, zero-crop output (no page-format guesswork).
+      worker.toCanvas().get('canvas').then(function(canvas){
+        worker.set({
+          jsPDF: {
+            unit: 'px',
+            format: [canvas.width, canvas.height],
+            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait'
+          }
+        });
+      }).toPdf().save()
+        .then(cleanup)
+        .catch(function(err){ console.error('[PawNest] PDF export failed', err); cleanup(); });
+    }).catch(function(err){ console.error('[PawNest] PDF prep failed', err); cleanup(); });
+  }
+
+  // init
+  loadUnclearList();
+</script>
+</body>
+</html>
