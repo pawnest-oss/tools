@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#33473A" />
+<title>Paw Nest — Admin Holiday Form</title>
+<link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --cream:#FBF6EF;
+    --cream-2:#F3ECE0;
+    --ink:#2A2620;
+    --ink-soft:#5C554A;
+    --forest:#33473A;
+    --forest-2:#26362B;
+    --sienna:#A85C32;
+    --sage:#C3D1B8;
+    --line:#E4DBC9;
+    --error:#B2402C;
+  }
+
+  *{ box-sizing:border-box; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+
+  html,body{
+    margin:0;
+    min-height:100vh;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+  }
+
+  body{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:48px 18px calc(64px + env(safe-area-inset-bottom));
+    padding-left:calc(18px + env(safe-area-inset-left));
+    padding-right:calc(18px + env(safe-area-inset-right));
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  @media (max-width:480px){
+    body{
+      padding:24px 12px calc(40px + env(safe-area-inset-bottom));
+      padding-left:calc(12px + env(safe-area-inset-left));
+      padding-right:calc(12px + env(safe-area-inset-right));
+      align-items:stretch;
+    }
+  }
+
+  /* signature nest-ring motif, sitting behind the header */
+  .nest-ring{
+    position:absolute;
+    top:-120px;
+    left:50%;
+    transform:translateX(-50%);
+    width:520px;
+    height:520px;
+    pointer-events:none;
+    opacity:0.5;
+  }
+  .nest-ring svg{ width:100%; height:100%; }
+
+  @media (max-width:480px){
+    .nest-ring{
+      top:-70px;
+      width:340px;
+      height:340px;
+    }
+  }
+
+  .wrap{
+    position:relative;
+    width:100%;
+    max-width:460px;
+    animation:rise 0.5s ease-out;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .card{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:38px 30px 34px;
+    box-shadow:0 18px 40px -22px rgba(42,38,32,0.35);
+  }
+
+  @media (max-width:480px){
+    .card{
+      border-radius:18px;
+      padding:26px 18px 22px;
+      box-shadow:0 10px 28px -18px rgba(42,38,32,0.3);
+    }
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:28px;
+  }
+
+  @media (max-width:480px){
+    header{ margin-bottom:20px; }
+    .logo{ width:56px; height:56px; }
+    h1{ font-size:24px; }
+  }
+
+  .logo{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid var(--cream-2);
+    box-shadow:0 4px 14px -6px rgba(42,38,32,0.4);
+    margin-bottom:14px;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:28px;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+    color:var(--forest-2);
+  }
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--sienna);
+    font-weight:600;
+    margin:0 0 6px;
+  }
+
+  .subtitle{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  form{ display:flex; flex-direction:column; gap:18px; margin-top:8px; }
+
+  .field{ display:flex; flex-direction:column; gap:6px; }
+
+  label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--forest-2);
+  }
+
+  input, select{
+    font-family:'Work Sans', sans-serif;
+    font-size:16px;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:var(--cream-2);
+    color:var(--ink);
+    outline:none;
+    transition:border-color 0.15s ease, background 0.15s ease;
+    width:100%;
+    min-height:48px;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  select{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2333473A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    background-size:18px;
+    padding-right:40px;
+  }
+
+  input::placeholder{ color:#B7AF9F; }
+
+  input:focus, select:focus{
+    border-color:var(--forest);
+    background-color:#fff;
+    box-shadow:0 0 0 3px rgba(51,71,58,0.14);
+  }
+
+  .row-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:480px){
+    .row-2{ grid-template-columns:1fr; gap:18px; }
+  }
+
+  .save-btn{
+    margin-top:8px;
+    padding:14px 18px;
+    min-height:50px;
+    border:none;
+    border-radius:12px;
+    background:var(--forest);
+    color:#fff;
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    transition:background 0.15s ease, transform 0.1s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .save-btn:hover{ background:var(--forest-2); }
+  .save-btn:active{ transform:scale(0.98); }
+  .save-btn:disabled{ background:#9CA79B; cursor:not-allowed; }
+
+  .save-btn svg{ width:16px; height:16px; }
+
+  .status{
+    text-align:center;
+    font-size:13px;
+    min-height:18px;
+    margin-top:2px;
+  }
+  .status.ok{ color:var(--forest); font-weight:600; }
+  .status.err{ color:var(--error); font-weight:600; }
+
+  footer{
+    text-align:center;
+    margin-top:20px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="nest-ring" aria-hidden="true">
+  <svg viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="96" fill="none" stroke="#C3D1B8" stroke-width="1" stroke-dasharray="2 6"/>
+    <circle cx="100" cy="100" r="80" fill="none" stroke="#A85C32" stroke-width="1" stroke-dasharray="1 5" opacity="0.5"/>
+    <circle cx="100" cy="100" r="64" fill="none" stroke="#33473A" stroke-width="1" stroke-dasharray="3 7" opacity="0.35"/>
+  </svg>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <header>
+      <img class="logo" src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="Paw Nest logo" />
+      <p class="eyebrow">Paw Nest</p>
+      <h1>Admin Holiday Form</h1>
+      <p class="subtitle">Select admin and holiday dates</p>
+    </header>
+
+    <form id="holidayForm">
+      <div class="field">
+        <label for="adminName">Admin Name</label>
+        <select id="adminName" name="adminName" required>
+          <option value="" disabled selected>Select admin</option>
+          <option value="Soma Dna">Soma Dna</option>
+          <option value="Ankit Dna">Ankit Dna</option>
+          <option value="Amit Dna">Amit Dna</option>
+        </select>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="holidayStartDate">Holiday Start Date</label>
+          <input type="date" id="holidayStartDate" name="holidayStartDate" required />
+        </div>
+        <div class="field">
+          <label for="holidayFinishDate">Holiday Finish Date</label>
+          <input type="date" id="holidayFinishDate" name="holidayFinishDate" required />
+        </div>
+      </div>
+
+      <button type="submit" class="save-btn" id="saveBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Holiday
+      </button>
+
+      <p class="status" id="status"></p>
+    </form>
+
+    <footer>Data is saved directly to the Paw Nest admin holiday sheet.</footer>
+  </div>
+</div>
+
+<script>
+  // ⚠️ MARK: paste your deployed Google Apps Script Web App URL here.
+  const API_URL = "https://script.google.com/macros/s/AKfycbxq2r5bH12gZ2okAnNWawiZVguhXlREbAn2tyfg9FLMDBxY_NbylgFz1-bpZlDKgg/exec";
+
+  const form = document.getElementById('holidayForm');
+  const saveBtn = document.getElementById('saveBtn');
+  const status = document.getElementById('status');
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    status.textContent = "";
+    status.className = "status";
+
+    if (API_URL.indexOf("PASTE_YOUR_APPS_SCRIPT_URL_HERE") !== -1) {
+      status.textContent = "API URL সেট করা হয়নি — holiday.html এ API_URL বসান।";
+      status.className = "status err";
+      return;
+    }
+
+    const startDate = document.getElementById('holidayStartDate').value;
+    const finishDate = document.getElementById('holidayFinishDate').value;
+
+    if (startDate && finishDate && finishDate < startDate) {
+      status.textContent = "Finish date, start date এর আগে হতে পারবে না।";
+      status.className = "status err";
+      return;
+    }
+
+    const payload = {
+      adminName: document.getElementById('adminName').value,
+      holidayStartDate: startDate,
+      holidayFinishDate: finishDate
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight for Apps Script
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (data.result === "success") {
+        status.textContent = "✓ Holiday saved successfully!";
+        status.className = "status ok";
+        form.reset();
+      } else {
+        status.textContent = "Error: " + (data.message || "Could not save.");
+        status.className = "status err";
+      }
+    } catch (err) {
+      status.textContent = "Network error — আবার চেষ্টা করুন।";
+      status.className = "status err";
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Holiday';
+    }
+  });
+</script>
+
+</body>
+</html>
