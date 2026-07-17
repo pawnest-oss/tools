@@ -231,6 +231,12 @@ html, body {
   font-size: 13px;
   padding: 30px 0;
 }
+/* FIX: author rule above (display:flex) was beating the browser's
+   default [hidden]{display:none}, so loader never actually hid.
+   This explicit override forces it to hide again. */
+.status-msg[hidden] {
+  display: none;
+}
 .loader-spinner {
   width: 30px;
   height: 30px;
@@ -451,6 +457,7 @@ async function loadMonth() {
   const cacheKey = `${currentYear}-${currentMonth}`;
   if (monthCache[cacheKey]) {
     dayData = monthCache[cacheKey];
+    hideStatus();
     renderGrid();
     return;
   }
