@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>Pet Boarding Calendar</title>
+<style>
+:root {
+  --bg: #F6F5F1;
+  --surface: #FFFFFF;
+  --ink: #24312A;
+  --ink-soft: #6B7A71;
+  --line: #E4E1D8;
+
+  --forest: #2F5D4E;
+  --forest-soft: #E4EEE9;
+
+  --paid: #2F9E63;
+  --paid-bg: #E5F6ED;
+
+  --unpaid: #92600C;
+  --unpaid-bg: #FCEBB6;
+
+  --holiday: #C2410C;
+  --holiday-bg: #FDECE1;
+
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Bengali", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0 12px 24px;
+}
+
+/* ===== Header ===== */
+.topbar {
+  padding: 18px 4px 10px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--forest);
+}
+.paw { font-size: 20px; }
+
+/* ===== Month nav ===== */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 10px 6px;
+  box-shadow: 0 1px 2px rgba(36,49,42,0.06);
+}
+.nav-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--forest-soft);
+  color: var(--forest);
+  font-size: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+}
+.nav-btn:active { transform: scale(0.94); }
+
+.month-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 700;
+}
+.month-label #monthName { font-size: 17px; }
+.month-label #yearName { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+
+/* ===== Legend ===== */
+.legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  padding: 12px 0 6px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.paid { background: var(--paid); }
+.dot.unpaid { background: var(--unpaid); }
+.dot.holiday { background: var(--holiday); }
+
+/* ===== Weekday row ===== */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 10px 2px 4px;
+}
+
+/* ===== Grid ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  padding: 2px;
+}
+
+.day-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.day-cell.empty { background: transparent; cursor: default; }
+
+.day-cell .num {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.day-cell .tags {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.tag {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 1px 4px;
+  border-radius: 5px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.tag.paid { background: var(--paid-bg); color: var(--paid); }
+.tag.unpaid { background: var(--unpaid-bg); color: var(--unpaid); }
+
+.day-cell.is-holiday {
+  background: var(--holiday-bg);
+  border-color: rgba(194,65,12,0.25);
+}
+.day-cell.is-holiday .num { color: var(--holiday); }
+
+.day-cell.is-today .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: #fff;
+}
+
+/* ===== Status message ===== */
+.status-msg {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+/* ===== Bottom sheet ===== */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24,30,26,0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 999;
+  animation: fadeIn 0.15s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 16px 22px;
+  max-height: 78vh;
+  overflow-y: auto;
+  animation: slideUp 0.22s ease-out;
+}
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--line);
+  border-radius: 4px;
+  margin: 4px auto 10px;
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sheet-header h2 { font-size: 16px; margin: 0; }
+.close-btn {
+  border: none;
+  background: var(--forest-soft);
+  color: var(--forest);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.sheet-body { display: flex; flex-direction: column; gap: 10px; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 6px 0 2px;
+}
+.section-title.paid { color: var(--paid); }
+.section-title.unpaid { color: var(--unpaid); }
+.section-title.holiday { color: var(--holiday); }
+
+.booking-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.booking-card .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  color: var(--ink-soft);
+}
+.booking-card .row b { color: var(--ink); font-weight: 600; }
+.booking-card a { color: var(--forest); text-decoration: none; font-weight: 600; }
+
+.empty-note {
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-align: center;
+  padding: 8px 0;
+}
+</style>
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- ===== Header ===== -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="paw">🐾</span>
+        <span class="brand-text">Pet Boarding Calendar</span>
+      </div>
+    </header>
+
+    <!-- ===== Month navigation ===== -->
+    <div class="month-nav">
+      <button id="prevBtn" class="nav-btn" aria-label="Previous month">‹</button>
+      <div class="month-label">
+        <span id="monthName">—</span>
+        <span id="yearName">—</span>
+      </div>
+      <button id="nextBtn" class="nav-btn" aria-label="Next month">›</button>
+    </div>
+
+    <!-- ===== Legend ===== -->
+    <div class="legend">
+      <span class="legend-item"><i class="dot paid"></i>Paid</span>
+      <span class="legend-item"><i class="dot unpaid"></i>Unpaid</span>
+      <span class="legend-item"><i class="dot holiday"></i>Holiday</span>
+    </div>
+
+    <!-- ===== Weekday row ===== -->
+    <div class="weekdays">
+      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+    </div>
+
+    <!-- ===== Calendar grid ===== -->
+    <div id="grid" class="grid"></div>
+
+    <!-- ===== Loading / error states ===== -->
+    <div id="statusMsg" class="status-msg" hidden></div>
+
+  </div>
+
+  <!-- ===== Day details bottom sheet ===== -->
+  <div id="sheetOverlay" class="sheet-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 id="sheetDate">—</h2>
+        <button id="sheetClose" class="close-btn" aria-label="Close">×</button>
+      </div>
+      <div id="sheetBody" class="sheet-body"></div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+ * PET BOARDING CALENDAR — Frontend logic
+ * ============================================================
+ * NICHE ETA BOSHATE HOBE (REQUIRED):
+ *   Apps Script Web App deploy korar por je URL pabe (…/exec diye shesh),
+ *   ota niche API_URL e boshiye dao.
+ *
+ *   Deploy > New deployment > Web app
+ *     Execute as: Me
+ *     Who has access: Anyone
+ *   Deploy korar por URL copy kore niche paste koro.
+ * ============================================================ */
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwFFXaYjpqmEOjMdK1mgjDLmTuN1o-YK8Q8PfJlh2kdJiao5xhZ7w_u2LWRH3sLYB0g/exec"; // <-- e.g. https://script.google.com/macros/s/AKfycb.../exec
+
+// ---- State ----
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1; // 1-12
+let monthCache = {}; // key "YYYY-M" -> data
+let dayData = {};    // current month's days object
+
+const MONTH_NAMES = ["January","February","March","April","May","June",
+                      "July","August","September","October","November","December"];
+
+// ---- DOM refs ----
+const gridEl = document.getElementById('grid');
+const monthNameEl = document.getElementById('monthName');
+const yearNameEl = document.getElementById('yearName');
+const statusMsgEl = document.getElementById('statusMsg');
+const sheetOverlay = document.getElementById('sheetOverlay');
+const sheetDate = document.getElementById('sheetDate');
+const sheetBody = document.getElementById('sheetBody');
+
+document.getElementById('prevBtn').addEventListener('click', () => changeMonth(-1));
+document.getElementById('nextBtn').addEventListener('click', () => changeMonth(1));
+document.getElementById('sheetClose').addEventListener('click', closeSheet);
+sheetOverlay.addEventListener('click', (e) => { if (e.target === sheetOverlay) closeSheet(); });
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+  if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+  loadMonth();
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+async function loadMonth() {
+  monthNameEl.textContent = MONTH_NAMES[currentMonth - 1];
+  yearNameEl.textContent = currentYear;
+
+  const cacheKey = `${currentYear}-${currentMonth}`;
+  if (monthCache[cacheKey]) {
+    dayData = monthCache[cacheKey];
+    renderGrid();
+    return;
+  }
+
+  showStatus("Loading…");
+
+  try {
+    const url = `${API_URL}?action=getMonthData&year=${currentYear}&month=${currentMonth}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.error) {
+      showStatus("Error: " + json.error);
+      dayData = {};
+      renderGrid();
+      return;
+    }
+
+    dayData = json.days || {};
+    monthCache[cacheKey] = dayData;
+    hideStatus();
+    renderGrid();
+  } catch (err) {
+    showStatus("Could not load data. Check API_URL in the script.");
+    dayData = {};
+    renderGrid();
+  }
+}
+
+function showStatus(msg) {
+  statusMsgEl.textContent = msg;
+  statusMsgEl.hidden = false;
+}
+function hideStatus() {
+  statusMsgEl.hidden = true;
+}
+
+function renderGrid() {
+  gridEl.innerHTML = '';
+
+  const firstOfMonth = new Date(currentYear, currentMonth - 1, 1);
+  const startWeekday = firstOfMonth.getDay(); // 0=Sun
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  const todayKey = toKey(new Date());
+
+  // Leading empty cells
+  for (let i = 0; i < startWeekday; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day-cell empty';
+    gridEl.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${currentYear}-${pad2(currentMonth)}-${pad2(d)}`;
+    const info = dayData[key] || { paid: [], unpaid: [], holiday: [] };
+
+    const cell = document.createElement('div');
+    cell.className = 'day-cell';
+    if (info.holiday && info.holiday.length) cell.classList.add('is-holiday');
+    if (key === todayKey) cell.classList.add('is-today');
+
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = d;
+    cell.appendChild(num);
+
+    const tags = document.createElement('div');
+    tags.className = 'tags';
+    if (info.paid && info.paid.length) {
+      const t = document.createElement('span');
+      t.className = 'tag paid';
+      t.textContent = 'Paid';
+      tags.appendChild(t);
+    }
+    if (info.unpaid && info.unpaid.length) {
+      const t = document.createElement('span');
+      t.className = 'tag unpaid';
+      t.textContent = 'Unpaid';
+      tags.appendChild(t);
+    }
+    cell.appendChild(tags);
+
+    cell.addEventListener('click', () => openSheet(key, info));
+    gridEl.appendChild(cell);
+  }
+}
+
+function toKey(date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+function openSheet(key, rawInfo) {
+  // Defensive: guarantee all three arrays exist, no matter what was passed in
+  const info = {
+    paid: (rawInfo && rawInfo.paid) || [],
+    unpaid: (rawInfo && rawInfo.unpaid) || [],
+    holiday: (rawInfo && rawInfo.holiday) || []
+  };
+
+  const [y, m, d] = key.split('-');
+  const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+  sheetDate.textContent = dateObj.toDateString();
+
+  sheetBody.innerHTML = '';
+
+  const hasAny = (info.paid.length + info.unpaid.length + info.holiday.length) > 0;
+  if (!hasAny) {
+    const p = document.createElement('div');
+    p.className = 'empty-note';
+    p.textContent = 'No bookings or holiday on this day.';
+    sheetBody.appendChild(p);
+  }
+
+  if (info.holiday && info.holiday.length) {
+    sheetBody.appendChild(sectionTitle('Holiday', 'holiday'));
+    info.holiday.forEach(h => {
+      sheetBody.appendChild(cardEl([
+        ['Admin', h.adminName],
+        ['From', h.start],
+        ['To', h.finish]
+      ]));
+    });
+  }
+
+  if (info.paid && info.paid.length) {
+    sheetBody.appendChild(sectionTitle('Paid Booking', 'paid'));
+    info.paid.forEach(b => sheetBody.appendChild(bookingCard(b)));
+  }
+
+  if (info.unpaid && info.unpaid.length) {
+    sheetBody.appendChild(sectionTitle('Unpaid Booking', 'unpaid'));
+    info.unpaid.forEach(b => sheetBody.appendChild(bookingCard(b)));
+  }
+
+  sheetOverlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+  const sheetEl = sheetOverlay.querySelector('.sheet');
+  if (sheetEl) sheetEl.scrollTop = 0;
+}
+
+function closeSheet() {
+  sheetOverlay.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function sectionTitle(text, cls) {
+  const h = document.createElement('div');
+  h.className = 'section-title ' + cls;
+  h.textContent = text;
+  return h;
+}
+
+function bookingCard(b) {
+  return cardEl([
+    ['Guardian', b.guardianName],
+    ['Pet', b.petName],
+    ['Breed', b.breed],
+    ['Check-in', b.checkIn],
+    ['Check-out', b.checkOut],
+    ['WhatsApp', b.whatsapp, true]
+  ]);
+}
+
+function cardEl(rows) {
+  const card = document.createElement('div');
+  card.className = 'booking-card';
+  rows.forEach(([label, value, isWhatsapp]) => {
+    if (!value) return;
+    const row = document.createElement('div');
+    row.className = 'row';
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+    row.appendChild(labelSpan);
+
+    if (isWhatsapp) {
+      const a = document.createElement('a');
+      const digits = String(value).replace(/[^0-9]/g, '');
+      a.href = `https://wa.me/${digits}`;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = value;
+      row.appendChild(a);
+    } else {
+      const b = document.createElement('b');
+      b.textContent = value;
+      row.appendChild(b);
+    }
+    card.appendChild(row);
+  });
+  return card;
+}
+
+// ---- Init ----
+loadMonth();
+</script>
+
+</body>
+</html>
