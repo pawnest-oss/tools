@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paw Nest — Booking Admin</title>
+<link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg">
+<style>
+  :root{
+    --cream:#FBF3E7;
+    --panel:#FFFFFF;
+    --tan:#D9A66C;
+    --tan-dark:#B47F42;
+    --brown:#5C3A21;
+    --ink:#3A2415;
+    --line:#EADCC4;
+    --good:#4C7A4C;
+    --shadow: 0 6px 20px rgba(92,58,33,0.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+  }
+  header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:18px 28px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    box-shadow:var(--shadow);
+  }
+  header img{
+    width:46px;height:46px;object-fit:contain;
+  }
+  header h1{
+    font-size:20px;
+    margin:0;
+    color:var(--brown);
+    letter-spacing:0.5px;
+  }
+  header span{
+    display:block;
+    font-size:12px;
+    color:var(--tan-dark);
+    font-weight:600;
+    letter-spacing:1px;
+  }
+  main{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:20px;
+    padding:24px 28px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  @media(max-width:760px){
+    main{grid-template-columns:1fr;}
+  }
+  .list-title{
+    font-size:13px;
+    font-weight:700;
+    color:var(--tan-dark);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin:0 0 10px 4px;
+  }
+  #bookingList{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow);
+  }
+  .card.active{
+    border-color:var(--tan);
+    background:#FFF8EE;
+    box-shadow:var(--shadow);
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:15px;
+    color:var(--brown);
+  }
+  .card p{
+    margin:2px 0;
+    font-size:13px;
+    color:#7a6650;
+  }
+  .card p b{color:var(--ink);}
+  .empty{
+    text-align:center;
+    padding:40px 16px;
+    color:#a08a6f;
+    font-size:14px;
+  }
+  #detailPanel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px;
+    box-shadow:var(--shadow);
+    min-height:340px;
+  }
+  #detailPanel.placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#b39d80;
+    font-size:14px;
+    text-align:center;
+  }
+  .detail-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .paw{
+    font-size:22px;
+  }
+  .detail-header h2{
+    margin:0;
+    font-size:20px;
+    color:var(--brown);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 20px;
+    margin-bottom:22px;
+  }
+  @media(max-width:520px){ .grid{grid-template-columns:1fr;} }
+  .field label{
+    display:block;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--tan-dark);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .field div{
+    font-size:15px;
+    color:var(--ink);
+  }
+  .confirm-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#FBF3E7;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:16px;
+  }
+  .confirm-row input{
+    width:19px;height:19px;accent-color:var(--good);cursor:pointer;
+  }
+  .confirm-row label{
+    font-size:14px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  button#submitBtn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:var(--tan-dark);
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:.3px;
+    transition:background .15s ease, opacity .15s ease;
+  }
+  button#submitBtn:disabled{
+    background:#d8c6a8;
+    cursor:not-allowed;
+  }
+  button#submitBtn:not(:disabled):hover{
+    background:var(--brown);
+  }
+  #toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--brown);
+    color:#fff;
+    padding:12px 22px;
+    border-radius:10px;
+    font-size:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    box-shadow:var(--shadow);
+  }
+  #toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="Paw Nest logo">
+  <div>
+    <h1>Paw Nest</h1>
+    <span>BOOKING ADMIN</span>
+  </div>
+</header>
+
+<main>
+  <div>
+    <p class="list-title">Pending Bookings</p>
+    <div id="bookingList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div id="detailPanel" class="placeholder">
+    Select a booking on the left to view full details.
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ------------------------------------------------------------------
+// Paste your Apps Script Web App deployment URL below.
+// ------------------------------------------------------------------
+const CONFIG = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbwPEjYOV8XlSgyvD7k3TK2Sa-gcH1U02sS44liMc87Yy-R4bS5VnwxHzAVcd2bgdrdj2A/exec'
+};
+
+const FIELD_ORDER = [
+  'Contact Date', 'GurdianName', 'WhatsApp', 'Pet Name',
+  'Breed', 'Check-in Date', 'Check-out Date'
+];
+
+let bookings = [];
+let selectedRow = null;
+
+async function loadBookings() {
+  const listEl = document.getElementById('bookingList');
+  listEl.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await fetch(`${CONFIG.API_URL}?action=list`);
+    bookings = await res.json();
+    renderList();
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">Could not load bookings. Check API_URL.</div>';
+  }
+}
+
+function renderList() {
+  const listEl = document.getElementById('bookingList');
+  if (!bookings.length) {
+    listEl.innerHTML = '<div class="empty">No bookings right now 🐾</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  bookings.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'card' + (b.row === selectedRow ? ' active' : '');
+    card.onclick = () => selectBooking(b.row);
+    card.innerHTML = `
+      <h3>${escapeHtml(b['GurdianName'] || '—')}</h3>
+      <p><b>Pet:</b> ${escapeHtml(b['Pet Name'] || '—')}</p>
+      <p><b>WhatsApp:</b> ${escapeHtml(b['WhatsApp'] || '—')}</p>
+    `;
+    listEl.appendChild(card);
+  });
+}
+
+function selectBooking(row) {
+  selectedRow = row;
+  renderList();
+  const b = bookings.find(x => x.row === row);
+  const panel = document.getElementById('detailPanel');
+  if (!b) return;
+
+  panel.classList.remove('placeholder');
+  panel.innerHTML = `
+    <div class="detail-header">
+      <span class="paw">🐾</span>
+      <h2>${escapeHtml(b['Pet Name'] || 'Booking')} — ${escapeHtml(b['GurdianName'] || '')}</h2>
+    </div>
+    <div class="grid">
+      ${FIELD_ORDER.map(f => `
+        <div class="field">
+          <label>${f}</label>
+          <div>${escapeHtml(b[f] !== undefined && b[f] !== '' ? b[f] : '—')}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="confirm-row">
+      <input type="checkbox" id="confirmCheck">
+      <label for="confirmCheck">Booking Confirm — tick once guardian has confirmed the stay</label>
+    </div>
+    <button id="submitBtn" disabled>Submit</button>
+  `;
+
+  document.getElementById('confirmCheck').addEventListener('change', e => {
+    document.getElementById('submitBtn').disabled = !e.target.checked;
+  });
+  document.getElementById('submitBtn').addEventListener('click', () => submitConfirm(row));
+}
+
+async function submitConfirm(row) {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    await fetch(CONFIG.API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+      body: JSON.stringify({ action: 'confirm', row })
+    });
+    showToast('Booking confirmed — removed from list.');
+    selectedRow = null;
+    document.getElementById('detailPanel').outerHTML =
+      '<div id="detailPanel" class="placeholder">Select a booking on the left to view full details.</div>';
+    await loadBookings();
+  } catch (err) {
+    showToast('Something went wrong. Try again.');
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+loadBookings();
+</script>
+
+</body>
+</html>
