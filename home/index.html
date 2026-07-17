@@ -1,138 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <style>
-        /* Modern Reset & Base Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Admin Panel</title>
+<link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
 
-        body {
-            background-color: #f4f7f6;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+  body {
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6dd5ed 100%);
+    background-attachment: fixed;
+  }
 
-        /* Container for the Tools Home Page */
-        .container {
-            width: 100%;
-            max-width: 480px; /* Perfect for mobile screens */
-            background: #ffffff;
-            padding: 30px 20px;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-            text-align: center;
-        }
+  .container {
+    width:100%;
+    max-width:440px;
+    background:rgba(255,255,255,0.97);
+    padding:32px 22px;
+    border-radius:20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    text-align:center;
+    backdrop-filter: blur(6px);
+  }
 
-        /* Header Section with Logo */
-        .header {
-            margin-bottom: 30px;
-        }
+  .header { margin-bottom:28px; }
 
-        .logo {
-            max-width: 120px;
-            height: auto;
-            border-radius: 50%; /* Rounded if it's a circular profile logo */
-            margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+  .logo {
+    width:100px;
+    height:100px;
+    object-fit:cover;
+    border-radius:50%;
+    margin-bottom:14px;
+    border:3px solid #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  }
 
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2c3e50;
-            text-transform: capitalize;
-            letter-spacing: 0.5px;
-        }
+  .title {
+    font-size:24px;
+    font-weight:800;
+    color:#1e3c72;
+    letter-spacing:0.5px;
+  }
 
-        /* Button Grid Layout */
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+  .subtitle {
+    font-size:13px;
+    color:#888;
+    margin-top:4px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
 
-        /* Interactive Buttons */
-        .tool-btn {
-            width: 100%;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+  .button-group {
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
 
-        /* Distinct Colors for Buttons */
-        .btn-booking {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-        }
+  .tool-btn {
+    width:100%;
+    padding:16px;
+    font-size:15px;
+    font-weight:700;
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    letter-spacing:0.5px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
 
-        .btn-booking:hover {
-            background: linear-gradient(135deg, #2980b9, #2573a7);
-            transform: translateY(-2px);
-        }
+  .tool-btn svg { width:20px; height:20px; flex-shrink:0; }
 
-        .btn-final {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-        }
+  .tool-btn:hover { transform:translateY(-3px); filter:brightness(1.06); }
+  .tool-btn:active { transform:translateY(1px) scale(0.98); box-shadow:0 3px 6px rgba(0,0,0,0.15); }
 
-        .btn-final:hover {
-            background: linear-gradient(135deg, #27ae60, #219653);
-            transform: translateY(-2px);
-        }
+  .btn-unpaid   { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+  .btn-booking  { background:linear-gradient(135deg,#3498db,#2980b9); }
+  .btn-final    { background:linear-gradient(135deg,#2ecc71,#27ae60); }
+  .btn-holiday  { background:linear-gradient(135deg,#f39c12,#e67e22); }
+  .btn-calendar { background:linear-gradient(135deg,#9b59b6,#8e44ad); }
 
-        /* Active click effect for touch screens */
-        .tool-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+  footer {
+    margin-top:26px;
+    font-size:11px;
+    color:#aaa;
+  }
+
+  @media (max-width:420px) {
+    .container { padding:26px 16px; border-radius:16px; }
+    .logo { width:84px; height:84px; }
+    .title { font-size:20px; }
+    .tool-btn { font-size:14px; padding:14px; }
+  }
+</style>
 </head>
 <body>
-
-    <div class="container">
-        <!-- Logo & Title -->
-        <div class="header">
-            <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="Logo" class="logo">
-            <h1 class="title">Admin Panel</h1>
-        </div>
-
-        <!-- Tool Selection Buttons -->
-        <div class="button-group">
-            <button class="tool-btn btn-booking" onclick="openTool('https://pawnest-oss.github.io/tools/booking_invoice/')">
-                Booking Ticket
-            </button>
-            <button class="tool-btn btn-final" onclick="openTool('https://pawnest-oss.github.io/tools/final_invoice/')">
-                Final Invoice
-            </button>
-        </div>
+  <div class="container">
+    <div class="header">
+      <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="Logo" class="logo">
+      <h1 class="title">Admin Panel</h1>
+      <div class="subtitle">Pawnest Tools</div>
     </div>
 
-    <!-- JavaScript to Handle Redirection Safely -->
-    <script>
-        function openTool(url) {
-            if(url) {
-                window.open(url, '_blank');
-            }
-        }
-    </script>
+    <div class="button-group">
+      <button class="tool-btn btn-unpaid" onclick="openTool('https://pawnest-oss.github.io/tools/unpaidbook/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6M9 8h6M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+        Unpaid Book
+      </button>
 
+      <button class="tool-btn btn-booking" onclick="openTool('https://pawnest-oss.github.io/tools/booking_invoice/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Booking Ticket
+      </button>
+
+      <button class="tool-btn btn-final" onclick="openTool('https://pawnest-oss.github.io/tools/final_invoice/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17v-6a2 2 0 012-2h6M9 17H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v2M9 17h8a2 2 0 002-2v-2"/></svg>
+        Final Invoice
+      </button>
+
+      <button class="tool-btn btn-holiday" onclick="openTool('https://pawnest-oss.github.io/tools/holidayform/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Holiday Form
+      </button>
+
+      <button class="tool-btn btn-calendar" onclick="openTool('https://pawnest-oss.github.io/tools/calender/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/></svg>
+        Booking Calendar
+      </button>
+    </div>
+
+    <footer>&copy; 2026 Pawnest</footer>
+  </div>
+
+<script>
+  function openTool(url) {
+    if(url) window.open(url, '_blank');
+  }
+</script>
 </body>
 </html>
