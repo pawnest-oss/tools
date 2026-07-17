@@ -85,11 +85,12 @@
   .tool-btn:hover { transform:translateY(-3px); filter:brightness(1.06); }
   .tool-btn:active { transform:translateY(1px) scale(0.98); box-shadow:0 3px 6px rgba(0,0,0,0.15); }
 
-  .btn-unpaid   { background:linear-gradient(135deg,#e74c3c,#c0392b); }
-  .btn-booking  { background:linear-gradient(135deg,#3498db,#2980b9); }
-  .btn-final    { background:linear-gradient(135deg,#2ecc71,#27ae60); }
-  .btn-holiday  { background:linear-gradient(135deg,#f39c12,#e67e22); }
-  .btn-calendar { background:linear-gradient(135deg,#9b59b6,#8e44ad); }
+  .btn-unpaid       { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+  .btn-booking      { background:linear-gradient(135deg,#3498db,#2980b9); }
+  .btn-confirmation { background:linear-gradient(135deg,#16a085,#1abc9c); }
+  .btn-final        { background:linear-gradient(135deg,#2ecc71,#27ae60); }
+  .btn-holiday      { background:linear-gradient(135deg,#f39c12,#e67e22); }
+  .btn-calendar     { background:linear-gradient(135deg,#9b59b6,#8e44ad); }
 
   footer {
     margin-top:26px;
@@ -122,6 +123,11 @@
       <button class="tool-btn btn-booking" onclick="openTool('https://pawnest-oss.github.io/tools/booking_invoice/')">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         Booking Ticket
+      </button>
+
+      <button class="tool-btn btn-confirmation" onclick="openTool('https://pawnest-oss.github.io/tools/conformation/')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Confirmation
       </button>
 
       <button class="tool-btn btn-final" onclick="openTool('https://pawnest-oss.github.io/tools/final_invoice/')">
