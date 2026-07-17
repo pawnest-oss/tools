@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
-<title>Pet Boarding Calendar</title>
+<title>PAW NEST Booking Calender</title>
+<link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" />
 <style>
 :root {
   --bg: #F6F5F1;
@@ -58,7 +59,42 @@ html, body {
   font-size: 19px;
   color: var(--forest);
 }
-.paw { font-size: 20px; }
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* ===== Quick action buttons ===== */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 6px 2px 4px;
+}
+.quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.quick-btn.unpaid-link {
+  background: var(--unpaid-bg);
+  color: var(--unpaid);
+}
+.quick-btn.ticket-link {
+  background: var(--forest-soft);
+  color: var(--forest);
+}
+.quick-btn:active { transform: scale(0.97); }
 
 /* ===== Month nav ===== */
 .month-nav {
@@ -184,12 +220,27 @@ html, body {
   color: #fff;
 }
 
-/* ===== Status message ===== */
+/* ===== Status message / loader ===== */
 .status-msg {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: var(--ink-soft);
   font-size: 13px;
-  padding: 20px 0;
+  padding: 30px 0;
+}
+.loader-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--forest-soft);
+  border-top-color: var(--forest);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===== Bottom sheet ===== */
@@ -292,10 +343,16 @@ html, body {
     <!-- ===== Header ===== -->
     <header class="topbar">
       <div class="brand">
-        <span class="paw">🐾</span>
-        <span class="brand-text">Pet Boarding Calendar</span>
+        <img class="brand-logo" src="https://raw.githubusercontent.com/pawnest-oss/pawnest/refs/heads/main/IMG-20260716-WA0001.jpg" alt="PAW NEST logo" />
+        <span class="brand-text">PAW NEST Booking Calender</span>
       </div>
     </header>
+
+    <!-- ===== Quick action buttons ===== -->
+    <div class="quick-actions">
+      <a class="quick-btn unpaid-link" href="https://pawnest-oss.github.io/tools/unpaidbook/" target="_blank" rel="noopener">Unpaid Book</a>
+      <a class="quick-btn ticket-link" href="https://pawnest-oss.github.io/tools/booking_invoice/" target="_blank" rel="noopener">Booking Ticket</a>
+    </div>
 
     <!-- ===== Month navigation ===== -->
     <div class="month-nav">
@@ -341,7 +398,7 @@ html, body {
 
 <script>
 /* ============================================================
- * PET BOARDING CALENDAR — Frontend logic
+ * PAW NEST BOOKING CALENDER — Frontend logic
  * ============================================================
  * NICHE ETA BOSHATE HOBE (REQUIRED):
  *   Apps Script Web App deploy korar por je URL pabe (…/exec diye shesh),
@@ -398,7 +455,7 @@ async function loadMonth() {
     return;
   }
 
-  showStatus("Loading…");
+  showStatus("ডেটা লোড হচ্ছে, অপেক্ষা করুন");
 
   try {
     const url = `${API_URL}?action=getMonthData&year=${currentYear}&month=${currentMonth}`;
@@ -424,7 +481,16 @@ async function loadMonth() {
 }
 
 function showStatus(msg) {
-  statusMsgEl.textContent = msg;
+  statusMsgEl.innerHTML = '';
+
+  const spinner = document.createElement('div');
+  spinner.className = 'loader-spinner';
+  statusMsgEl.appendChild(spinner);
+
+  const text = document.createElement('span');
+  text.textContent = msg;
+  statusMsgEl.appendChild(text);
+
   statusMsgEl.hidden = false;
 }
 function hideStatus() {
