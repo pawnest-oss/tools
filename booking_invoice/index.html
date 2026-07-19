@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>PawNest — Boarding Invoice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
@@ -63,10 +64,11 @@
   }
   label span.opt{color:#9aa; font-weight:400;}
   input, select{
-    width:100%; padding:11px 12px; font-size:15px;
+    width:100%; padding:11px 12px; font-size:16px;
     border:1px solid var(--line); border-radius:8px;
     background:#fff; color:var(--ink); font-family:inherit;
     outline:none;
+    -webkit-appearance:none; appearance:none;
   }
   input:focus, select:focus{border-color: var(--gold-deep); box-shadow:0 0 0 3px rgba(200,154,60,0.18);}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
@@ -211,6 +213,14 @@
     .wrap{max-width:100%;}
     .ticket{box-shadow:none; border-radius:0;}
     @page{margin: 10mm;}
+  }
+
+  @media (max-width:420px){
+    body{padding: 16px 10px 50px;}
+    .brand img{height:38px; width:38px;}
+    .brand h1{font-size:19px;}
+    .card{padding:16px 14px 18px;}
+    .row2{grid-template-columns:1fr; gap:0;}
   }
 </style>
 </head>
