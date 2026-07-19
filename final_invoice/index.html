@@ -354,7 +354,7 @@
 
     <div class="actions no-print">
       <button class="print-btn" onclick="window.print()">🖨 Print</button>
-      <button class="pdf-btn" onclick="downloadPdf()">⬇ PDF</button>
+      <button class="pdf-btn" onclick="downloadPdf()">⬇ PNG</button>
     </div>
     <button class="new-btn no-print" onclick="backToList()">← Back to list</button>
   </div>
@@ -631,13 +631,10 @@
     window.scrollTo(0,0);
   }
 
-  // ---------- PDF export ----------
-  // Renders #ticketPrintWrap with html2canvas and saves a real .pdf file
-  // (window.print() only opens the OS dialog, it can't auto-download).
-  // Font/grid fixes noted above still apply. Page is now a fixed US Letter
-  // sheet with the ticket image centered on it (previously the page was
-  // sized exactly to the canvas and the image ended up pinned top-left
-  // with blank space around it instead of centered).
+  // ---------- PNG export ----------
+  // Renders #ticketPrintWrap with html2canvas and saves it as a real .png
+  // file (window.print() only opens the OS dialog, it can't auto-download).
+  // Font/grid fixes noted above still apply.
   function downloadPdf(){
     const wrap = $('ticketPrintWrap');
     const imgs = Array.from(wrap.querySelectorAll('img'));
@@ -652,7 +649,7 @@
       ? document.fonts.ready
       : Promise.resolve();
 
-    showLoader('PDF তৈরি হচ্ছে…');
+    showLoader('PNG তৈরি হচ্ছে…');
 
     function cleanup(){
       document.body.classList.remove('pdf-capturing');
@@ -661,53 +658,33 @@
 
     if (typeof html2canvas !== 'function') {
       hideLoader();
-      alert('PDF লাইব্রেরি লোড হয়নি (network/adblock issue হতে পারে). পেজ রিফ্রেশ করে আবার চেষ্টা করো।');
+      alert('Image লাইব্রেরি লোড হয়নি (network/adblock issue হতে পারে). পেজ রিফ্রেশ করে আবার চেষ্টা করো।');
       return;
     }
 
     Promise.all([waitForFonts, ...waitForImages]).then(() => {
       document.body.classList.add('pdf-capturing'); // same look as @media print, no shadows
 
-      const elWidthPx = wrap.offsetWidth;   // CSS px, pre-scale
-      const elHeightPx = wrap.offsetHeight;
-
       html2canvas(wrap, {
         scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false
       }).then(function(canvas){
-        const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-        if (!JsPDF) throw new Error('jsPDF লোড হয়নি');
-        const pdf = new JsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 36; // 0.5in on all sides
-
-        const pxToPt = 72 / 96; // CSS px -> pt at standard 96dpi
-        const imgWidthPt = elWidthPx * pxToPt;
-        const imgHeightPt = elHeightPx * pxToPt;
-
-        const availWidth = pageWidth - margin * 2;
-        const availHeight = pageHeight - margin * 2;
-        const scale = Math.min(availWidth / imgWidthPt, availHeight / imgHeightPt, 1); // never upscale
-
-        const finalWidth = imgWidthPt * scale;
-        const finalHeight = imgHeightPt * scale;
-        const x = (pageWidth - finalWidth) / 2;   // horizontal center
-        const y = (pageHeight - finalHeight) / 2; // vertical center
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-        pdf.save(($('outInvoiceId').textContent || 'final-invoice') + '.pdf');
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = ($('outInvoiceId').textContent || 'final-invoice') + '.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         cleanup();
       }).catch(function(err){
-        console.error('[PawNest] PDF export failed', err);
+        console.error('[PawNest] PNG export failed', err);
         cleanup();
-        alert('PDF তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+        alert('PNG তৈরি করতে সমস্যা হয়েছে: ' + err.message);
       });
     }).catch(function(err){
-      console.error('[PawNest] PDF prep failed', err);
+      console.error('[PawNest] PNG prep failed', err);
       cleanup();
-      alert('PDF তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+      alert('PNG তৈরি করতে সমস্যা হয়েছে: ' + err.message);
     });
   }
 
