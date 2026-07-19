@@ -6,7 +6,7 @@
 <title>PawNest — Boarding Invoice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --ink:#173229;
@@ -422,7 +422,7 @@
 
     <div class="actions no-print">
       <button class="print-btn" onclick="window.print()">🖨 Print</button>
-      <button class="pdf-btn" onclick="downloadPdf()">⬇ PDF</button>
+      <button class="pdf-btn" onclick="downloadPng()">⬇ PNG</button>
     </div>
     <button class="new-btn no-print" onclick="resetForm()">+ New Invoice</button>
   </div>
@@ -645,7 +645,8 @@
   // Waits for the logo images inside the ticket to finish loading before
   // handing the element to html2canvas — otherwise the canvas can be
   // snapshotted before the (cross-origin) logo has actually rendered.
-  function downloadPdf(){
+  // Then renders the ticket to a canvas and triggers a PNG download.
+  function downloadPng(){
     const el = $('ticketEl');
     const imgs = Array.from(el.querySelectorAll('img'));
     const waitForImages = imgs.map(img => {
@@ -657,13 +658,15 @@
     });
 
     Promise.all(waitForImages).then(() => {
-      html2pdf().set({
-        margin: 8,
-        filename: ($('outInvoiceId').textContent || 'invoice') + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-        jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
-      }).from(el).save();
+      html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#FAF6EC' })
+        .then(canvas => {
+          const link = document.createElement('a');
+          link.download = ($('outInvoiceId').textContent || 'invoice') + '.png';
+          link.href = canvas.toDataURL('image/png', 1.0);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
     });
   }
 </script>
