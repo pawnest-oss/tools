@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PawNest — Boarding Invoice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --ink:#173229;
+    --ink-soft:#3f594e;
+    --paper:#FAF6EC;
+    --paper-dim:#F1EBDA;
+    --gold:#C89A3C;
+    --gold-deep:#9C7524;
+    --rust:#A6432B;
+    --line: rgba(23,50,41,0.16);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(200,154,60,0.14), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(200,154,60,0.10), transparent 45%);
+    font-family:'Hind Siliguri','Inter',sans-serif;
+    color: var(--ink);
+    min-height:100vh;
+    padding: 22px 14px 60px;
+  }
+  .wrap{max-width:520px; margin:0 auto;}
+
+  .brand{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:20px; padding: 0 4px;
+  }
+  .brand img{height:46px; width:46px; object-fit:contain;}
+  .brand h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size:22px;
+    color: var(--paper); margin:0; letter-spacing:0.3px;
+  }
+  .brand p{margin:2px 0 0; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color: var(--gold);}
+
+  /* ---------- FORM CARD ---------- */
+  .card{
+    background: var(--paper);
+    border-radius: var(--radius);
+    padding: 20px 18px 22px;
+    margin-bottom:16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.28);
+  }
+  .card h2{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:2px;
+    text-transform:uppercase; color: var(--gold-deep); margin:0 0 14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card h2::after{content:""; flex:1; height:1px; background: var(--line);}
+
+  label{
+    display:block; font-size:12.5px; color: var(--ink-soft); margin: 12px 0 5px; font-weight:500;
+  }
+  label span.opt{color:#9aa; font-weight:400;}
+  input, select{
+    width:100%; padding:11px 12px; font-size:16px;
+    border:1px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--ink); font-family:inherit;
+    outline:none;
+    -webkit-appearance:none; appearance:none;
+  }
+  input:focus, select:focus{border-color: var(--gold-deep); box-shadow:0 0 0 3px rgba(200,154,60,0.18);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  .wa-wrap{position:relative;}
+  .wa-status{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-top:6px; min-height:14px;
+  }
+  .wa-status.found{color:#2f7d4f;}
+  .wa-status.notfound{color:#8a7c5a;}
+  .wa-status.loading{color:#8a7c5a;}
+
+  .calc-box{
+    margin-top:14px; padding:12px 14px; background: var(--paper-dim);
+    border-radius:10px; border:1px dashed var(--line);
+    font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .calc-box .line{display:flex; justify-content:space-between; padding:3px 0;}
+  .calc-box .line.total{border-top:1px solid var(--line); margin-top:6px; padding-top:8px; font-weight:600;}
+  .calc-box .line.due{color:var(--rust); font-weight:600;}
+  .calc-box .line.days-line{align-items:center;}
+  .calc-box .days-input{
+    width:68px; text-align:right; padding:4px 7px; font-family:'IBM Plex Mono',monospace; font-size:13px;
+    border:1px solid var(--gold-deep); border-radius:5px; background:#fff; color:var(--ink); outline:none;
+  }
+  .calc-box .days-input:focus{box-shadow:0 0 0 3px rgba(200,154,60,0.18);}
+
+  .submit-btn{
+    width:100%; margin-top:20px; padding:14px; border:none; border-radius:10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color:#1c1406; font-weight:600; font-size:15.5px; letter-spacing:0.3px;
+    cursor:pointer; font-family:'Hind Siliguri',sans-serif;
+  }
+  .submit-btn:active{transform: translateY(1px);}
+  .submit-btn:disabled{opacity:0.6;}
+
+  .err{color:var(--rust); font-size:12.5px; margin-top:10px; display:none;}
+
+  /* ---------- TICKET / INVOICE ---------- */
+  #ticketView{display:none;}
+  .ticket{
+    background: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.32);
+    overflow:hidden;
+  }
+  .ticket-top{padding: 22px 20px 18px;}
+  .ticket-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .ticket-head .id{
+    text-align:right; font-family:'IBM Plex Mono',monospace;
+  }
+  .ticket-head .id .label{font-size:10px; letter-spacing:2px; color:var(--gold-deep); text-transform:uppercase;}
+  .ticket-head .id .num{font-size:19px; font-weight:600; color:var(--rust); letter-spacing:1px;}
+  .ticket-head .id .thanks{font-family:'Hind Siliguri',sans-serif; font-size:11px; color:var(--ink-soft); margin-top:4px; font-style:italic;}
+  .ticket-logo{display:flex; align-items:center; gap:10px;}
+  .ticket-logo img{height:38px; width:38px; object-fit:contain;}
+  .ticket-logo .t1{font-family:'Fraunces',serif; font-weight:600; font-size:19px; line-height:1;}
+  .ticket-logo .t2{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:2px; color:var(--gold-deep); text-transform:uppercase;}
+
+  .pass-title{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:3px;
+    text-transform:uppercase; color:var(--ink-soft); text-align:center;
+    margin: 16px 0 4px; position:relative;
+  }
+  .pass-title::before, .pass-title::after{
+    content:""; position:absolute; top:50%; width:26%; height:1px; background: var(--line);
+  }
+  .pass-title::before{left:0;}
+  .pass-title::after{right:0;}
+
+  .duo{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;}
+  .duo .field-block .k{font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace;}
+  .duo .field-block .v{font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin-top:2px;}
+  .duo .field-block .v.small{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
+
+  .divider-dots{
+    display:flex; align-items:center; gap:4px; margin:18px 0 2px;
+  }
+  .divider-dots .d{flex:1; border-top:2px dashed var(--line);}
+
+  .route{
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:16px;
+  }
+  .route .stop .k{font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace;}
+  .route .stop .date{font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin-top:3px;}
+  .route .stop .time{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);}
+  .route .stop.out{text-align:right;}
+  .route .arrow{font-family:'IBM Plex Mono',monospace; color:var(--gold-deep); font-size:13px; text-align:center;}
+  .route .arrow .days{font-size:10px; margin-top:2px; white-space:nowrap;}
+
+  /* perforation stub */
+  .perf{
+    position:relative; height:0;
+    border-top:2px dashed rgba(23,50,41,0.35);
+    margin: 4px 0 0;
+  }
+  .perf::before, .perf::after{
+    content:""; position:absolute; top:-11px; width:22px; height:22px; border-radius:50%;
+    background: var(--ink);
+  }
+  .perf::before{left:-31px;}
+  .perf::after{right:-31px;}
+
+  .ticket-bottom{padding: 18px 20px 20px; background: var(--paper-dim);}
+  .fare-row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:13px; padding:4px 0; color:var(--ink-soft);}
+  .fare-row.total{border-top:1px solid var(--line); margin-top:6px; padding-top:9px; font-weight:600; color:var(--ink); font-size:14px;}
+  .fare-row.due{font-weight:700; color:var(--rust); font-size:15px;}
+
+  .thanks-bottom{
+    text-align:center; font-family:'Fraunces',serif; font-weight:600; font-size:12px;
+    color: var(--ink-soft); font-style:italic; margin-top:12px;
+  }
+
+  .stamp{
+    margin-top:18px; display:flex; align-items:center; gap:12px;
+  }
+  .stamp .paws{flex:1; display:flex; justify-content:space-evenly; opacity:0.55;}
+  .stamp .paws svg{width:14px; height:14px; fill:var(--gold-deep);}
+  .stamp .seal{
+    flex-shrink:0; width:52px; height:52px; border-radius:50%;
+    border:2px dashed var(--gold-deep); display:flex; align-items:center; justify-content:center;
+    transform:rotate(-8deg);
+  }
+  .stamp .seal svg{width:26px; height:26px; fill:none; stroke:var(--gold-deep); stroke-width:1.6;}
+  .stamp-caption{text-align:center; font-family:'Fraunces',serif; font-weight:600; font-size:12.5px; color:var(--ink-soft); margin-top:10px; letter-spacing:0.3px;}
+
+  .actions{display:flex; gap:10px; margin-top:16px;}
+  .actions button{
+    flex:1; padding:13px; border-radius:10px; border:none; font-size:14.5px; font-weight:600;
+    font-family:'Hind Siliguri',sans-serif; cursor:pointer;
+  }
+  .actions .print-btn{background: var(--ink); color: var(--paper);}
+  .actions .pdf-btn{background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color:#1c1406;}
+  .new-btn{
+    width:100%; margin-top:10px; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.25);
+    background:transparent; color: var(--paper); font-family:'Hind Siliguri',sans-serif; font-size:14px; cursor:pointer;
+  }
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .brand, .no-print{display:none !important;}
+    .wrap{max-width:100%;}
+    .ticket{box-shadow:none; border-radius:0;}
+    @page{margin: 10mm;}
+  }
+
+  @media (max-width:420px){
+    body{padding: 16px 10px 50px;}
+    .brand img{height:38px; width:38px;}
+    .brand h1{font-size:19px;}
+    .card{padding:16px 14px 18px;}
+    .row2{grid-template-columns:1fr; gap:0;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/main/1784124368151.png" alt="PawNest logo" crossorigin="anonymous">
+    <div>
+      <h1>PawNest</h1>
+      <p>Boarding Invoice</p>
+    </div>
+  </div>
+
+  <!-- ===================== FORM (Bengali, unchanged) ===================== -->
+  <div id="formView">
+    <form id="invoiceForm">
+
+      <div class="card">
+        <h2>Guardian তথ্য</h2>
+
+        <label>WhatsApp নম্বর</label>
+        <div class="wa-wrap">
+          <input type="tel" id="whatsapp" name="whatsapp" placeholder="যেমন 98XXXXXXXX" required>
+        </div>
+        <div class="wa-status" id="waStatus"></div>
+
+        <label>Guardian-এর নাম</label>
+        <input type="text" id="guardianName" name="guardianName" required>
+
+        <label>Mail ID <span class="opt">(ঐচ্ছিক)</span></label>
+        <input type="email" id="email" name="email">
+
+        <label>ঠিকানা</label>
+        <input type="text" id="address" name="address" required>
+
+        <label>ID Proof নম্বর (Aadhaar/Voter ID)</label>
+        <input type="text" id="idProof" name="idProof" required>
+      </div>
+
+      <div class="card">
+        <h2>Pet তথ্য</h2>
+
+        <label>পোষ্যের নাম</label>
+        <input type="text" id="petName" name="petName" required>
+
+        <div class="row2">
+          <div>
+            <label>Breed</label>
+            <input type="text" id="breed" name="breed" required>
+          </div>
+          <div>
+            <label>বয়স</label>
+            <input type="text" id="age" name="age" placeholder="যেমন ২ বছর" required>
+          </div>
+        </div>
+
+        <label>লিঙ্গ</label>
+        <select id="gender" name="gender" required>
+          <option value="">নির্বাচন করুন</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <h2>Boarding তথ্য</h2>
+
+        <div class="row2">
+          <div>
+            <label>Check-in Date</label>
+            <input type="date" id="checkinDate" name="checkinDate" required>
+          </div>
+          <div>
+            <label>Check-in Time</label>
+            <input type="time" id="checkinTime" name="checkinTime" required>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Check-out Date</label>
+            <input type="date" id="checkoutDate" name="checkoutDate" required>
+          </div>
+          <div>
+            <label>Check-out Time</label>
+            <input type="time" id="checkoutTime" name="checkoutTime" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Payment</h2>
+
+        <label>প্রতি দিনের চার্জ (₹)</label>
+        <input type="number" id="perDayCharge" name="perDayCharge" min="0" step="1" required>
+
+        <div class="row2">
+          <div>
+            <label>Discount (₹)</label>
+            <input type="number" id="discount" name="discount" min="0" step="1" value="0">
+          </div>
+          <div>
+            <label>Advance (₹)</label>
+            <input type="number" id="advance" name="advance" min="0" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="calc-box">
+          <div class="line days-line">
+            <span>মোট দিন</span>
+            <input type="number" id="calcDaysInput" class="days-input" min="1" step="1" placeholder="—">
+          </div>
+          <div class="line"><span>সাবটোটাল</span><span id="calcSubtotal">₹0</span></div>
+          <div class="line"><span>Discount</span><span id="calcDiscount">− ₹0</span></div>
+          <div class="line total"><span>মোট বিল</span><span id="calcTotal">₹0</span></div>
+          <div class="line due"><span>Due</span><span id="calcDue">₹0</span></div>
+        </div>
+        <input type="hidden" id="totalDaysManual" name="totalDaysManual">
+      </div>
+
+      <div class="err" id="formErr"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">Generate Invoice →</button>
+    </form>
+  </div>
+
+  <!-- ===================== TICKET / INVOICE (all English) ===================== -->
+  <div id="ticketView">
+    <div class="ticket" id="ticketEl">
+      <div class="ticket-top">
+        <div class="ticket-head">
+          <div class="ticket-logo">
+            <img src="https://raw.githubusercontent.com/pawnest-oss/pawnest/main/1784124368151.png" alt="PawNest" crossorigin="anonymous">
+            <div>
+              <div class="t1">PawNest</div>
+              <div class="t2">Pet Boarding</div>
+            </div>
+          </div>
+          <div class="id">
+            <div class="label">Invoice No.</div>
+            <div class="num" id="outInvoiceId">PN-000000</div>
+            <div class="thanks" id="outBillDate">—</div>
+          </div>
+        </div>
+
+        <div class="pass-title">Boarding Pass</div>
+
+        <div class="duo">
+          <div class="field-block">
+            <div class="k">Guardian</div>
+            <div class="v" id="outGuardianName">—</div>
+            <div class="v small" id="outContact">—</div>
+            <div class="v small" id="outAddress">—</div>
+            <div class="v small" id="outIdProof">—</div>
+          </div>
+          <div class="field-block">
+            <div class="k">Pet</div>
+            <div class="v" id="outPetName">—</div>
+            <div class="v small" id="outBreedAgeGender">—</div>
+          </div>
+        </div>
+
+        <div class="route">
+          <div class="stop in">
+            <div class="k">Check-in</div>
+            <div class="date" id="outCheckinDate">—</div>
+            <div class="time" id="outCheckinTime">—</div>
+          </div>
+          <div class="arrow">
+            <div>
+              <svg width="18" height="18" viewBox="0 0 24 24" style="fill:var(--gold-deep);">
+                <path d="M12 3.2 2.5 10.9v10.4h6.2v-6.4h6.6v6.4h6.2V10.9L12 3.2Z"/>
+              </svg>
+            </div>
+            <div class="days" id="outDaysLabel">— days</div>
+          </div>
+          <div class="stop out">
+            <div class="k">Check-out</div>
+            <div class="date" id="outCheckoutDate">—</div>
+            <div class="time" id="outCheckoutTime">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="perf"></div>
+
+      <div class="ticket-bottom">
+        <div class="fare-row"><span>Per Day × Days</span><span id="outPerDayCalc">—</span></div>
+        <div class="fare-row" id="outDiscountRow"><span>Discount</span><span id="outDiscount">− ₹0</span></div>
+        <div class="fare-row total"><span>Total Bill</span><span id="outTotalBill">₹0</span></div>
+        <div class="fare-row"><span>Advance</span><span id="outAdvance">₹0</span></div>
+        <div class="fare-row due"><span>Due</span><span id="outDue">₹0</span></div>
+
+        <div class="barcode"></div>
+        <div class="thanks-bottom">Thank you for your trust</div>
+        <div class="barcode-caption" id="outBarcodeCaption">PN-000000</div>
+      </div>
+    </div>
+
+    <div class="actions no-print">
+      <button class="print-btn" onclick="window.print()">🖨 Print</button>
+      <button class="pdf-btn" onclick="downloadPdf()">⬇ PDF</button>
+    </div>
+    <button class="new-btn no-print" onclick="resetForm()">+ New Invoice</button>
+  </div>
+
+</div>
+
+<script>
+  // ---------- Apps Script Web App URL (deployed backend) ----------
+  // This is the ONLY place the API URL needs to go — paste your /exec URL here.
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzp8aKN2UYILLR0fuv-1wCGBnGxiY1KY4H_E-EeCA7dXcuGnqgxggx5z9_okpwqaxhtww/exec';
+
+  const $ = (id) => document.getElementById(id);
+  let waLookupTimer = null;
+
+  // Calls the Apps Script backend. Body is sent as a plain string (not JSON
+  // content-type) on purpose — this keeps it a CORS "simple request" so no
+  // preflight OPTIONS call is made, which Apps Script web apps can't answer.
+  async function callApi(payload){
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Network error: ' + res.status);
+    return res.json();
+  }
+
+  // ---------- Live day / bill calculation (form side, stays Bengali) ----------
+  // The days field is auto-filled from the check-in/check-out dates, but the
+  // user can now type their own number directly into it — their edit always
+  // wins over the auto-calculated value, until they clear the field again.
+  let daysManuallyEdited = false;
+
+  function computeDaysFromDates(){
+    const ciD = $('checkinDate').value, ciT = $('checkinTime').value || '00:00';
+    const coD = $('checkoutDate').value, coT = $('checkoutTime').value || '00:00';
+    if (!ciD || !coD) return null;
+    const inDt = new Date(ciD + 'T' + ciT);
+    const outDt = new Date(coD + 'T' + coT);
+    let diff = Math.round((outDt - inDt) / (1000*60*60*24));
+    if (isNaN(diff)) return null;
+    return Math.max(diff, 1);
+  }
+
+  function recalc(){
+    const autoDays = computeDaysFromDates();
+
+    if (!daysManuallyEdited) {
+      $('calcDaysInput').value = autoDays !== null ? autoDays : '';
+    }
+
+    const daysVal = parseInt($('calcDaysInput').value, 10);
+    const days = (!isNaN(daysVal) && daysVal > 0) ? daysVal : null;
+
+    const perDay = parseFloat($('perDayCharge').value) || 0;
+    let discount = parseFloat($('discount').value) || 0;
+    const advance = parseFloat($('advance').value) || 0;
+
+    const subtotal = days ? perDay * days : 0;
+    if (discount < 0) discount = 0;
+    if (discount > subtotal) discount = subtotal;
+    const total = subtotal - discount;
+    const due = total - advance;
+
+    $('calcSubtotal').textContent = '₹' + subtotal.toLocaleString('en-IN');
+    $('calcDiscount').textContent = '− ₹' + discount.toLocaleString('en-IN');
+    $('calcTotal').textContent = '₹' + total.toLocaleString('en-IN');
+    $('calcDue').textContent = '₹' + due.toLocaleString('en-IN');
+
+    $('totalDaysManual').value = days !== null ? days : '';
+  }
+
+  $('calcDaysInput').addEventListener('input', function(){
+    daysManuallyEdited = this.value !== '';
+    recalc();
+  });
+
+  ['checkinDate','checkinTime','checkoutDate','checkoutTime','perDayCharge','discount','advance']
+    .forEach(id => $(id).addEventListener('input', recalc));
+
+  // ---------- WhatsApp auto-lookup ----------
+  $('whatsapp').addEventListener('input', function(){
+    const val = this.value.trim();
+    clearTimeout(waLookupTimer);
+    if (val.replace(/\D/g,'').length < 10) { $('waStatus').textContent=''; return; }
+    $('waStatus').className = 'wa-status loading';
+    $('waStatus').textContent = 'খোঁজা হচ্ছে…';
+    waLookupTimer = setTimeout(() => {
+      callApi({ action: 'getCustomer', whatsapp: val })
+        .then(onCustomerFound)
+        .catch(() => { $('waStatus').className='wa-status notfound'; $('waStatus').textContent=''; });
+    }, 500);
+  });
+
+  function onCustomerFound(customer){
+    if (!customer) {
+      $('waStatus').className = 'wa-status notfound';
+      $('waStatus').textContent = 'নতুন গ্রাহক';
+      return;
+    }
+    $('waStatus').className = 'wa-status found';
+    $('waStatus').textContent = '✓ পূর্বের তথ্য পাওয়া গেছে — অটো-ফিল করা হলো';
+    $('guardianName').value = customer.guardianName || '';
+    $('email').value = customer.email || '';
+    $('address').value = customer.address || '';
+    $('idProof').value = customer.idProof || '';
+    $('petName').value = customer.petName || '';
+    $('breed').value = customer.breed || '';
+    $('age').value = customer.age || '';
+    $('gender').value = customer.gender || '';
+  }
+
+  // ---------- Submit ----------
+  $('invoiceForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    $('formErr').style.display = 'none';
+    $('submitBtn').disabled = true;
+    $('submitBtn').textContent = 'তৈরি হচ্ছে…';
+
+    const form = {};
+    new FormData(this).forEach((v,k) => form[k] = v);
+
+    callApi({ action: 'saveInvoice', form: form })
+      .then(function(result){
+        if (result && result.error) { onSaveError({ message: result.error }); return; }
+        onSaved(result);
+      })
+      .catch(onSaveError);
+  });
+
+  function onSaveError(err){
+    $('submitBtn').disabled = false;
+    $('submitBtn').textContent = 'Generate Invoice →';
+    $('formErr').style.display = 'block';
+    $('formErr').textContent = 'সমস্যা হয়েছে: ' + (err.message || err);
+  }
+
+  // ---------- English formatters (used only in the invoice/ticket) ----------
+  function fmtDate(d){
+    if(!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  function fmtTime(t){
+    if(!t) return '—';
+    const [h,m] = t.split(':');
+    const hh = parseInt(h,10);
+    const ap = hh >= 12 ? 'PM' : 'AM';
+    const h12 = ((hh + 11) % 12) + 1;
+    return h12 + ':' + m + ' ' + ap;
+  }
+  // Parses the "dd/MM/yyyy hh:mm a" timestamp the backend returns and shows
+  // just the date the bill was cut, in the top corner of the ticket.
+  function fmtBillDate(ts){
+    if(!ts) return '—';
+    const datePart = ts.split(' ')[0];
+    const bits = datePart.split('/');
+    if (bits.length !== 3) return ts;
+    const [d,m,y] = bits;
+    const dt = new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10));
+    if (isNaN(dt)) return ts;
+    return 'Billed ' + dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  }
+
+  function onSaved(result){
+    const f = Object.fromEntries(new FormData($('invoiceForm')).entries());
+
+    $('outInvoiceId').textContent = result.invoiceId;
+    $('outBarcodeCaption').textContent = result.invoiceId;
+    $('outBillDate').textContent = fmtBillDate(result.timestamp);
+
+    $('outGuardianName').textContent = f.guardianName;
+    $('outContact').textContent = f.whatsapp + (f.email ? ' · ' + f.email : '');
+    $('outAddress').textContent = f.address;
+    $('outIdProof').textContent = 'ID Proof: ' + f.idProof;
+
+    $('outPetName').textContent = f.petName;
+    $('outBreedAgeGender').textContent = f.breed + ' · ' + f.age + ' · ' + f.gender;
+
+    $('outCheckinDate').textContent = fmtDate(f.checkinDate);
+    $('outCheckinTime').textContent = fmtTime(f.checkinTime);
+    $('outCheckoutDate').textContent = fmtDate(f.checkoutDate);
+    $('outCheckoutTime').textContent = fmtTime(f.checkoutTime);
+    $('outDaysLabel').textContent = result.totalDays + ' day' + (result.totalDays > 1 ? 's' : '');
+
+    $('outPerDayCalc').textContent = '₹' + result.perDay.toLocaleString('en-IN') + ' × ' + result.totalDays + ' = ₹' + result.subtotal.toLocaleString('en-IN');
+
+    if (result.discount > 0) {
+      $('outDiscountRow').style.display = 'flex';
+      $('outDiscount').textContent = '− ₹' + result.discount.toLocaleString('en-IN');
+    } else {
+      $('outDiscountRow').style.display = 'none';
+    }
+
+    $('outTotalBill').textContent = '₹' + result.totalBill.toLocaleString('en-IN');
+    $('outAdvance').textContent = '₹' + result.advance.toLocaleString('en-IN');
+    $('outDue').textContent = '₹' + result.due.toLocaleString('en-IN');
+
+    $('formView').style.display = 'none';
+    $('ticketView').style.display = 'block';
+    window.scrollTo(0,0);
+  }
+
+  function resetForm(){
+    $('invoiceForm').reset();
+    $('waStatus').textContent = '';
+    daysManuallyEdited = false;
+    $('calcDaysInput').value = '';
+    $('calcSubtotal').textContent = '₹0';
+    $('calcDiscount').textContent = '− ₹0';
+    $('calcTotal').textContent = '₹0';
+    $('calcDue').textContent = '₹0';
+    $('submitBtn').disabled = false;
+    $('submitBtn').textContent = 'Generate Invoice →';
+    $('ticketView').style.display = 'none';
+    $('formView').style.display = 'block';
+    window.scrollTo(0,0);
+  }
+
+  // Waits for the logo images inside the ticket to finish loading before
+  // handing the element to html2canvas — otherwise the canvas can be
+  // snapshotted before the (cross-origin) logo has actually rendered.
+  function downloadPdf(){
+    const el = $('ticketEl');
+    const imgs = Array.from(el.querySelectorAll('img'));
+    const waitForImages = imgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+      });
+    });
+
+    Promise.all(waitForImages).then(() => {
+      html2pdf().set({
+        margin: 8,
+        filename: ($('outInvoiceId').textContent || 'invoice') + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+        jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+      }).from(el).save();
+    });
+  }
+</script>
+</body>
+</html>
